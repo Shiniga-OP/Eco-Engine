@@ -23,8 +23,7 @@ class Engine {
     return camada;
   }
   
-  novaParticula(sprite, camada) {
-    const particula = new Particula(null, sprite);
+  novaParticula(particula, camada) {
     if(!camada) {
       camada.push(particula);
     } else {
@@ -32,26 +31,11 @@ class Engine {
     }
   }
   
-  novoSprite(png, camada, x=0, y=0, escalaX=32, escalaY=32, auto=true) {
-    const sprite = {
-      imagem: new Image(),
-      x: 0,
-      y: 0,
-      escalaX: 16,
-      escalaY: 16
-    };
-    
-    sprite.imagem.src = png;
-    sprite.x=x;
-    sprite.y=y;
-    sprite.escalaX=escalaX;
-    sprite.escalaY=escalaY;
-    if(auto==true) {
-      if(!camada) {
-        camada.push(sprite);
-      } else {
-        this.camada1.push(sprite);
-      }
+  novoSprite(sprite, camada) {
+    if(!camada) {
+      camada.push(sprite);
+    } else {
+      this.camada1.push(sprite);
     }
     return sprite;
   }
@@ -207,20 +191,7 @@ class Engine {
     }
   }
   
-  novoBotao(png, estado="click", funcao, camada, x=0, y=0, escalaX=16, escalaY=16) {
-    const sprite = {
-      imagem: new Image(),
-      x: 0,
-      y: 0,
-      escalaX: 16,
-      escalaY: 16
-    };
-    sprite.imagem.src=png;
-    sprite.x=x;
-    sprite.y=y;
-    sprite.escalaX=escalaX;
-    sprite.escalaY=escalaY;
-    
+  novoBotao(sprite, estado="click", funcao, camada) {
     if(estado==="click") {
       sprite.imagem.onload = () => {
         this.canvas.addEventListener('touchstart', (evento) => {
@@ -295,7 +266,26 @@ class Engine {
     this.canvas.height = window.innerHeight;
   }
   
-  
+  moverPara(objeto, xDestino, yDestino, velocidade) {
+    const dx = xDestino - objeto.x;
+    const dy = yDestino - objeto.y;
+    const distancia = Math.sqrt(dx * dx + dy * dy);
+    
+    const passoX = (dx / distancia) * velocidade;
+    const passoY = (dy / distancia) * velocidade;
+    
+    const mover = () => {
+      if(Math.abs(objeto.x - xDestino) < Math.abs(passoX) && Math.abs(objeto.y - yDestino) < Math.abs(passoY)) {
+        objeto.x = xDestino;
+        objeto.y = yDestino;
+      } else {
+        objeto.x += passoX;
+        objeto.y += passoY;
+      requestAnimationFrame(mover);
+    }
+  };
+  mover();
+}
   
   repetirAte(condicao, funcao) {
     while(condicao) {
@@ -339,12 +329,11 @@ class Sprite {
 }
 
 class Particula {
-    constructor(cor, caminho, velocidadeX=100, velocidadeY=100, vida=200) {
+    constructor(cor, caminho, x=0, y=0, escalaX=32, escalaY=32) {
         this.cor = cor;
-        this.sprite = new Sprite(caminho);
-        this.velocidadeX = velocidadeX;
-        this.velocidadeY = velocidadeY;
-        this.vida = vida;
+        this.sprite = new Sprite(caminho, x, y, escalaX, escalaY);
+        this.velo = 10;
+        this.vida = 100;
         this.tamanho = Math.random() * 5 + 2;
     }
 
@@ -359,8 +348,16 @@ class Particula {
     }
     
     comportamento() {
-      this.sprite.x += Math.random()*5;
-      this.sprite.y += Math.random()*5;
+      if(Math.random()*10<=5) {
+        this.sprite.x += Math.random()*5;
+      } else {
+        this.sprite.y += Math.random()*5;
+      }
+      if(Math.random()*10<=5) {
+        this.sprite.x -= Math.random()*5;
+      } else {
+        this.sprite.y -= Math.random()*5;
+      }
     }
 
     desenhar(ctx) {
