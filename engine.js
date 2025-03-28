@@ -286,6 +286,32 @@ class Engine {
   };
   mover();
 }
+
+ moverParaArray(objeto, array) {
+  function moverParaPonto(i) {
+    if(i>=array.length) return;
+
+    const dx = array[i].x - objeto.x;
+    const dy = array[i].y - objeto.y;
+    const distancia = Math.sqrt(dx * dx + dy * dy);
+    const passoX = (dx / distancia) * array[i].velo;
+    const passoY = (dy / distancia) * array[i].velo;
+
+    const mover = () => {
+      if(Math.abs(objeto.x - array[i].x) < Math.abs(passoX) && Math.abs(objeto.y - array[i].y) < Math.abs(passoY)) {
+        objeto.x = array[i].x;
+        objeto.y = array[i].y;
+        moverParaPonto(i + 1);
+      } else {
+        objeto.x += passoX;
+        objeto.y += passoY;
+        requestAnimationFrame(mover);
+      }
+    };
+    mover();
+  }
+  moverParaPonto(0);
+}
   
   repetirAte(condicao, funcao) {
     while(condicao) {
