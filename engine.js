@@ -7,10 +7,10 @@ class Engine {
     }
     
     this.ctx = this.canvas.getContext("2d");
-    this.ctx
     this.texto = [];
+    this.camada = [];
     this.camadas = [];
-    this.camada1 = this.novaCamada();
+    this.camadas.push(this.camada);
     this.renderizacao = renderAutomatico;
     
     if(this.renderizacao) this.renderizar();
@@ -23,19 +23,11 @@ class Engine {
     return camada;
   }
   
-  novaParticula(particula, camada) {
-    if(!camada) {
-      camada.push(particula);
-    } else {
-      this.camada1.push(particula);
-    }
-  }
-  
-  novoSprite(sprite, camada) {
-    if(!camada) {
+  novoSprite(sprite, camada=null) {
+    if(camada != null) {
       camada.push(sprite);
     } else {
-      this.camada1.push(sprite);
+      this.camada.push(sprite);
     }
     return sprite;
   }
@@ -245,7 +237,7 @@ class Engine {
     }
     
     if(!camada) {
-      this.camada1.push(sprite);
+      this.camada.push(sprite);
     } else {
       camada.push(sprite);
     }
@@ -336,6 +328,14 @@ class Engine {
       funcao();
       requestAnimationFrame(() => this.sempreExecutar(funcao, intervalo));
     }, intervalo*1000)
+  }
+  
+  limpar() {
+    this.camadas = [];
+    this.camada = [];
+    this.camadas.push(this.camada);
+    
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
   }
   
   mudarTela(tela) {
