@@ -7,6 +7,7 @@ class Engine {
     }
     
     this.ctx = this.canvas.getContext("2d");
+    this.ctx.imageSmoothingEnabled = false;
     this.texto = [];
     this.camada = [];
     this.camadas = [];
@@ -19,11 +20,21 @@ class Engine {
   
   novaCamada(renderizarAutomatico=true) {
     const camada = [];
-    if(renderizarAutomatico) this.camadas.push(camada);
+    this.camadas.push(camada);
     return camada;
   }
   
-  novoSprite(sprite, camada=null) {
+  novoSprite(caminho, camada=null) {
+    const sprite = new Sprite(caminho);
+    if(camada != null) {
+      camada.push(sprite);
+    } else {
+      this.camada.push(sprite);
+    }
+    return sprite;
+  }
+  
+  addSprite(sprite, camada=null) {
     if(camada != null) {
       camada.push(sprite);
     } else {
@@ -50,13 +61,13 @@ class Engine {
         if(sprite.imagem && sprite.imagem.complete) {
           this.ctx.drawImage(
             sprite.imagem,
-            sprite.x, sprite.y,
+            sprite.x, -sprite.y,
             sprite.escalaX, sprite.escalaY
           );
         } else if(sprite.texto) {
           this.ctx.fillText(
             sprite.texto,
-            sprite.x, sprite.y,
+            sprite.x, -sprite.y,
             sprite.escalaX, sprite.escalaY
           );
           this.ctx.font = sprite.escala;
@@ -93,7 +104,7 @@ class Engine {
         for(const sprite of camada) {
           contextoOculto.drawImage(
             sprite.imagem, 
-            sprite.x, sprite.y,
+            sprite.x, -sprite.y,
             sprite.escalaX, sprite.escalaY
           );
         }
@@ -183,7 +194,12 @@ class Engine {
     }
   }
   
-  novoBotao(sprite, estado="click", funcao, camada) {
+  novoBotao(caminho, estado="click", funcao, camada) {
+    const sprite = new Sprite(caminho);
+    this.addBotao(sprite, estado, funcao, camada);
+  }
+    
+  addBotao(sprite, estado="click", funcao, camada) {
     if(estado==="click") {
       sprite.imagem.onload = () => {
         this.canvas.addEventListener('touchstart', (evento) => {
@@ -351,6 +367,24 @@ class Sprite {
     this.y = y;
     this.escalaX = escalaX;
     this.escalaY = escalaY;
+  }
+}
+
+class Gravidade {
+  constructor(objeto, forca=5, estado=true) {
+    this.objeto = objeto;
+    this.forca = forca;
+    this.gradiante = 0.01;
+    this.c = 0;
+    this.limite = 10;
+    this.estado = estado;
+    this.iniciar();
+  }
+  
+  iniciar() {
+    this.objeto.y -= this.c;
+    if(this.c<=this.limite) this.c += this.gradiante * this.forca;
+    requestAnimationFrame(() => this.iniciar())
   }
 }
 
