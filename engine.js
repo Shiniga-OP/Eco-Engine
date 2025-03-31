@@ -4,6 +4,10 @@ class Engine {
       this.canvas = document.getElementById(canvasId);
     } else {
       this.canvas = document.querySelector("canvas");
+      if(!this.canvas) {
+        this.canvas = document.createElement("canvas");
+        document.body.appendChild(this.canvas);
+      }
     }
     
     this.ctx = this.canvas.getContext("2d");
@@ -13,6 +17,7 @@ class Engine {
     this.camadas = [];
     this.camadas.push(this.camada);
     this.renderizacao = renderAutomatico;
+    this.tamanhoPadrao = 32;
     
     if(this.renderizacao) this.renderizar();
     if(canvasCompleto) this.ajustarTela();
@@ -24,32 +29,32 @@ class Engine {
     return camada;
   }
   
-  novoSprite(caminho, camada=null) {
-    const sprite = new Sprite(caminho);
-    if(camada != null) {
-      camada.push(sprite);
-    } else {
-      this.camada.push(sprite);
-    }
+  novoSprite(caminho, camada=this.camada) {
+    const sprite = new Sprite(caminho, 0, 0, this.tamanhoPadrao, this.tamanhoPadrao);
+    camada.push(sprite);
     return sprite;
   }
   
-  addSprite(sprite, camada=null) {
-    if(camada != null) {
-      camada.push(sprite);
-    } else {
-      this.camada.push(sprite);
-    }
+  add(sprite, camada=this.camada) {
+    camada.push(sprite);
     return sprite;
   }
   
-  comecarAnimacao(alvo, animacao, intervalo=0.5, inicio=0) {
+  rm(sprite, camada=this.camada) {
+  const indice = camada.indexOf(sprite);
+  if(indice !== -1) {
+    camada.splice(indice, 1);
+  }
+}
+  
+  rodarAnimacao(alvo=Sprite, animacao=[], repetir=1, intervalo=0.5, inicio=0) {
+    
     let frame = inicio;
     setTimeout(() => {
       alvo.imagem.src = animacao[frame];
-      frame += 1;
+      frame++;
       
-      if(frame<animacao.length) requestAnimationFrame(() => this.comecarAnimacao(alvo, animacao, intervalo, frame));
+      if(frame<animacao.length) requestAnimationFrame(() => this.rodarAnimacao(alvo, animacao, repetir, intervalo, frame));
     }, intervalo * 1000);
   }
   
@@ -61,13 +66,13 @@ class Engine {
         if(sprite.imagem && sprite.imagem.complete) {
           this.ctx.drawImage(
             sprite.imagem,
-            sprite.x, -sprite.y,
+            sprite.x, sprite.y,
             sprite.escalaX, sprite.escalaY
           );
         } else if(sprite.texto) {
           this.ctx.fillText(
             sprite.texto,
-            sprite.x, -sprite.y,
+            sprite.x, sprite.y,
             sprite.escalaX, sprite.escalaY
           );
           this.ctx.font = sprite.escala;
@@ -104,7 +109,7 @@ class Engine {
         for(const sprite of camada) {
           contextoOculto.drawImage(
             sprite.imagem, 
-            sprite.x, -sprite.y,
+            sprite.x, sprite.y,
             sprite.escalaX, sprite.escalaY
           );
         }
@@ -146,7 +151,8 @@ class Engine {
 		      sprite1.x -= antesX;
 		    }
 		  }
-		}
+		  return true;
+		} else return false;
   }
   
   novoMapa(json, tiles, x=0, y=0, escala=16, camada) {
@@ -177,7 +183,7 @@ class Engine {
   return solidos;
 }
   
-  novoTexto(escrita, tamanho="30px", coloracao="blue", camada) {
+  novoTexto(escrita, tamanho="30px", coloracao="blue", camada=this.camada) {
     const texto = {
       texto: escrita,
       cor: coloracao,
@@ -187,19 +193,15 @@ class Engine {
       escalaX: 228,
       escalaY: 32
     };
-    if(!camada) {
-      this.camada1.push(texto);
-    } else {
-      camada.push(texto);
-    }
+    camada.push(texto);
   }
   
-  novoBotao(caminho, estado="click", funcao, camada) {
+  novoBotao(caminho, estado="click", funcao, camada=this.camada) {
     const sprite = new Sprite(caminho);
     this.addBotao(sprite, estado, funcao, camada);
   }
     
-  addBotao(sprite, estado="click", funcao, camada) {
+  addBotao(sprite, estado="click", funcao, camada=this.camada) {
     if(estado==="click") {
       sprite.imagem.onload = () => {
         this.canvas.addEventListener('touchstart', (evento) => {
@@ -251,13 +253,7 @@ class Engine {
         pressionado = false;
       });
     }
-    
-    if(!camada) {
-      this.camada.push(sprite);
-    } else {
-      camada.push(sprite);
-    }
-
+    camada.push(sprite);
     return sprite;
   }
   
@@ -382,8 +378,8 @@ class Gravidade {
   }
   
   iniciar() {
-    this.objeto.y -= this.c;
-    if(this.c<=this.limite) this.c += this.gradiante * this.forca;
+    this.objeto.y += this.c;
+    if(this.c<=this.limite && this.estado==true) this.c += this.gradiante * this.forca;
     requestAnimationFrame(() => this.iniciar())
   }
 }
@@ -444,6 +440,8 @@ class ArrastavelHtml {
         this.id = id;
         this.elemento = document.getElementById(id);
         
+        this.seMove = 1;
+        
         this.x = document.createElement('h1');
         this.x.id = 'posX';
         document.body.appendChild(this.x);
@@ -467,15 +465,13 @@ class ArrastavelHtml {
     }
     
     iniciarArrasto(evento) {
-        evento.preventDefault();
-        
         const toque = evento.touches[0];
         
         this.posX = this.posX || this.elemento.offsetLeft;
         this.posY = this.posY || this.elemento.offsetTop;
         
         this.deslocX = toque.clientX - this.posX
-        this.deslocY = toque.clientY - this.posY
+        if(this.seMove==1 || this.seMove==2) this.deslocY = toque.clientY - this.posY
         
         this.arrastando = true;
     }
@@ -489,9 +485,9 @@ class ArrastavelHtml {
             
             this.posX = Math.round(this.posX / this.tamanhoGrade) * this.tamanhoGrade;
             this.posY = Math.round(this.posY / this.tamanhoGrade) * this.tamanhoGrade;
-            
-            this.elemento.style.transform = `translate(${this.posX}px, ${this.posY}px)`;
-            
+
+            if(this.seMove==0 || this.seMove==2) this.elemento.style.left = this.posX+"px";
+            if(this.seMove==1 || this.seMove==2) this.elemento.style.top = this.posY+"px";
             this.x.textContent = "X: " + this.posX;
             this.y.textContent = "Y: " + this.posY;
         }
