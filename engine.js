@@ -493,3 +493,21 @@ class ArrastavelHtml {
         }
     }
 }
+
+class Camera {
+  constructor(engine, foco, camada) {
+    this.engine = engine;
+    this.camada = camada;
+    this.foco = foco;
+  }
+  
+  ajustar() {
+    const ultimoX = this.foco.x - (this.engine.canvas.width / 2 - this.foco.escalaX / 2);
+    const ultimoY = this.foco.y - (this.engine.canvas.height / 2 - this.foco.escalaY / 2);
+    
+    for(let i=0; i<this.camada.length; i++) {
+      this.camada[i].x = this.camada[i].x - ultimoX;
+      this.camada[i].y = this.camada[i].y - ultimoY;
+    }
+  }
+}
