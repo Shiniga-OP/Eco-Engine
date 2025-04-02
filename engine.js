@@ -50,11 +50,13 @@ class Engine {
   rodarAnimacao(alvo=Sprite, animacao=[], repetir=1, intervalo=0.5, inicio=0) {
     
     let frame = inicio;
-    setTimeout(() => {
       alvo.imagem.src = animacao[frame];
       frame++;
       
-      if(frame<animacao.length) requestAnimationFrame(() => this.rodarAnimacao(alvo, animacao, repetir, intervalo, frame));
+      setTimeout(() => {
+        if(frame<animacao.length) {
+          requestAnimationFrame(() => this.rodarAnimacao(alvo, animacao, repetir, intervalo, frame));
+        }
     }, intervalo * 1000);
   }
   
@@ -155,7 +157,7 @@ class Engine {
 		} else return false;
   }
   
-  novoMapa(json, tiles, x=0, y=0, escala=16, camada) {
+  novoMapa(json, tiles, x=0, y=0, escala=16, camada=this.camada) {
   const solidos = [];
 
   function verificacao(tile, item, listaSolidos) {
@@ -164,17 +166,13 @@ class Engine {
     }
   }
 
-  for(let linha = 0; linha < json.mapa.length; linha++) {
-    for(let coluna = 0; coluna < json.mapa[linha].length; coluna++) {
+  for(let linha=0; linha<json.mapa.length; linha++) {
+    for(let coluna=0; coluna<json.mapa[linha].length; coluna++) {
       const tipoTile = json.mapa[linha][coluna];
 
-      if(tipoTile !== "ar") {
+      if(tipoTile != "ar") {
         const tile = tiles[tipoTile];
-        const novoTile = this.novoSprite(tile, camada);
-        novoTile.x = x + coluna * escala;
-        novoTile.y = y + linha * escala;
-        novoTile.escalaX = escala;
-        novoTile.escalaY = escala;
+        const novoTile = this.add(new Sprite(tile, x + coluna * escala, y + linha * escala, escala, escala), camada);
 
         verificacao(tipoTile, novoTile, json.colisao);
       }
