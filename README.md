@@ -1,4 +1,4 @@
-## uma engine mobile feita totalmente em javascript, html, e css
+## uma engine mobile feita em Java, Xml, javascript, Html, e Css
 
 ## a engine foi feita totalmente no Android sem quaisquer computadores
 
