@@ -4,6 +4,11 @@ const sugestoes = document.getElementById('auto');
 
 const chaves =
 `
+""
+''
+{}
+()
+[]
 function
 if
 else
@@ -20,25 +25,50 @@ var
 class
 new
 extends
-console.log
-console.error
-setTimeout
-setInterval
+console.log();
+console.error();
+setTimeout();
+setInterval();
 addEventListener
-getElementById
-createElement
+document.getElementById
+document.createElement
 document
 document.body
-appendChild
-removeChild
-querySelector
+appendChild()
+removeChild()
+document.querySelector()
 
-add
-novoSprite
-novoBotao
-novoMapa
-novaCamada
-novaParticula
+engine
+engine.add();
+engine.rm();
+engine.novoSprite();
+engine.novoBotao();
+engine.addBotao();
+engine.novoMapa();
+engine.novoTexto();
+engine.novaCamada();
+engine.novaParticula();
+engine.solidos();
+engine.ajustarTela();
+engine.rodarAnimacao();
+engine.moverPara();
+engine.moverParaArray();
+
+engine.repetirAte();
+engine.repetirVezes();
+engine.esperar();
+engine.sempreExecutar();
+engine.limpar();
+engine.mudarTela();
+
+engine.tamanhoPadrao
+engine.renderizacao
+engine.camada
+
+ecoEditor.coord
+ecoEditor.seMove
+ecoEditor.elemento
+
 Sprite
 Particula
 ArrastavelHtml
@@ -58,15 +88,14 @@ function exibirSugestoes() {
         return;
     }
     
-    .filter(item => item.toLowerCase()
-    .includes(palavraAtual.toLowerCase()));
+    const sugestoesFiltradas = todasSugestoes.filter(item => item.toLowerCase().includes(palavraAtual.toLowerCase()));
 
-    if(todasSugestoes.length==0) {
+    if(sugestoesFiltradas.length==0) {
         sugestoes.style.display="none";
         return;
     }
 
-    sugestoes.innerHTML = todasSugestoes.map(item => `<div class="sugestao">${item}</div>`).join("");
+    sugestoes.innerHTML = sugestoesFiltradas.map(item => `<div class="sugestao">${item}</div>`).join("");
 
     const coordenadasCursor=obterCoordenadasCursor();
     sugestoes.style.left=coordenadasCursor.esquerda+"px";
@@ -123,7 +152,7 @@ editor.addEventListener('input', exibirSugestoes);
 editor.addEventListener("keydown", (evento)=> {
     if(evento.key=="Tab") {
         evento.preventDefault();
-        document.execCommand('insertText', false, "");
+        document.execCommand('insertText', false, "\t");
     }
 });
 

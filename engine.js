@@ -434,12 +434,13 @@ class Particula {
 }
 
 class ArrastavelHtml {
-    constructor(id, tamanhoGrade) {
+    constructor(id, tamanhoGrade, coord=true) {
         this.id = id;
         this.elemento = document.getElementById(id);
+        this.coord = coord;
         
-        this.seMove = 1;
-        
+        this.seMove = 2;
+        if(this.coord==true) {
         this.x = document.createElement('h1');
         this.x.id = 'posX';
         document.body.appendChild(this.x);
@@ -451,7 +452,7 @@ class ArrastavelHtml {
         this.y.style.position = 'absolute';
         this.x.style.transform = 'translate(100px, 100px)';
         this.y.style.transform = 'translate(200px, 100px)';
-        
+        }
         this.tamanhoGrade = tamanhoGrade;
         this.arrastando = false;
         
@@ -484,10 +485,12 @@ class ArrastavelHtml {
             this.posX = Math.round(this.posX / this.tamanhoGrade) * this.tamanhoGrade;
             this.posY = Math.round(this.posY / this.tamanhoGrade) * this.tamanhoGrade;
 
-            if(this.seMove==0 || this.seMove==2) this.elemento.style.left = this.posX+"px";
-            if(this.seMove==1 || this.seMove==2) this.elemento.style.top = this.posY+"px";
+            if(this.seMove==1 || this.seMove==3) this.elemento.style.left = this.posX+"px";
+            if(this.seMove==2 || this.seMove==3) this.elemento.style.top = this.posY+"px";
+            if(this.coord==true) {
             this.x.textContent = "X: " + this.posX;
             this.y.textContent = "Y: " + this.posY;
+            }
         }
     }
 }
