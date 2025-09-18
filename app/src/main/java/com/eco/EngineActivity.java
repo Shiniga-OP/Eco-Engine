@@ -20,7 +20,6 @@ import android.webkit.WebResourceRequest;
 import android.webkit.WebChromeClient;
 import java.io.PrintStream;
 import java.io.ByteArrayOutputStream;
-
 import android.app.Activity;
 import android.os.Bundle;
 import android.webkit.ConsoleMessage;
@@ -50,7 +49,6 @@ public class EngineActivity extends Activity {
 			tela.getSettings().setAllowFileAccessFromFileURLs(true);
 			tela.getSettings().setAllowUniversalAccessFromFileURLs(true);
 		}
-		tela.setWebChromeClient(new WebChromeClient());
         pedirPermissao();
 		System.setOut(console);
 		System.setErr(console);
@@ -59,7 +57,6 @@ public class EngineActivity extends Activity {
     public void carregarPagina() {
 		try {
 			configurarWebView();
-
 			String caminho = ArquivosUtil.obterArmaExterno()+"/.ECO/"+this.caminho+"index.html";
 			if(new File(caminho).exists()) {
 				tela.loadUrl("file://" + caminho);
@@ -83,38 +80,37 @@ public class EngineActivity extends Activity {
 		if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
 			tela.setWebContentsDebuggingEnabled(true);
 		}
-
 		if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
 			tela.getSettings().setAllowFileAccessFromFileURLs(true);
 			tela.getSettings().setAllowUniversalAccessFromFileURLs(true);
 		}
-		// webViewClient personalizado pra lidar com navegacao local
+
 		tela.setWebViewClient(new WebViewClient() {
 				@Override
-				public boolean shouldOverrideUrlLoading(WebView v, WebResourceRequest r) {
-					return manipularNavegacao(r.getUrl().toString());
+				public boolean shouldOverrideUrlLoading(WebView webview, WebResourceRequest requisicao) {
+					String url = requisicao.getUrl().toString();
+					return tratarNavegacao(url);
 				}
 
 				@Override
-				public boolean shouldOverrideUrlLoading(WebView v, String url) {
-					return manipularNavegacao(url);
+				public boolean shouldOverrideUrlLoading(WebView webview, String url) {
+					return tratarNavegacao(url);
 				}
 
-				public boolean manipularNavegacao(String url) {
-					if(url.startsWith("file://") || url.startsWith("content://")) {
-						tela.loadUrl(url);
-						return true;
-					} else if(url.startsWith("http://") || url.startsWith("https://")) {
-						startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+				public boolean tratarNavegacao(String url) {
+					if(url.startsWith("http://") || url.startsWith("https://")) {
+						Intent intencao = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+						startActivity(intencao);
 						return true;
 					}
 					return false;
 				}
 			});
+
 		tela.setWebChromeClient(new WebChromeClient() {
 				@Override
 				public boolean onConsoleMessage(ConsoleMessage msg) {
-					console.consoleLogs += msg.message() + " @linha " + msg.lineNumber();
+					console.consoleLogs += msg.message() + " linha " + msg.lineNumber() + "\n";
 					return true;
 				}
 			});
