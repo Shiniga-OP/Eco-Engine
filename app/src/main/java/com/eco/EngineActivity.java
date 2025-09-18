@@ -14,11 +14,15 @@ import android.webkit.WebView;
 import android.widget.Toast;
 import android.os.Environment;
 import android.view.View;
+import java.io.File;
+import android.webkit.WebViewClient;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebChromeClient;
 
 public class EngineActivity extends Activity {
 
     public static WebView tela;
-    public static final int PERMISSAO = 1;
+    private static final int PERMISSAO = 1;
 	public String caminho;
 
     @Override
@@ -28,29 +32,80 @@ public class EngineActivity extends Activity {
 
 		Intent dados = getIntent();
 		this.caminho = dados.getStringExtra("projeto");
-		
+
         tela = findViewById(R.id.tela);
+
+		tela.getSettings().setAllowFileAccess(true);
+		tela.getSettings().setAllowContentAccess(true);
+
+		if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+			tela.getSettings().setAllowFileAccessFromFileURLs(true);
+			tela.getSettings().setAllowUniversalAccessFromFileURLs(true);
+		}
+		tela.setWebChromeClient(new WebChromeClient());
+
         pedirPermissao();
     }
 
     public void carregarPagina() {
-        try {
+		try {
+			configurarWebView();
+
 			String caminho = ArquivosUtil.obterArmaExterno()+"/.ECO/"+this.caminho+"index.html";
-            if(new java.io.File(caminho).exists()) {
-                tela.loadUrl(caminho);
-            } else {
+			if(new File(caminho).exists()) {
+				tela.loadUrl("file://" + caminho);
+			} else {
 				ArquivosUtil.criarDir(caminho.replace("index.html", ""));
-				
 				ArquivosUtil.copiarPastaAssets(this, caminho.replace("index.html", ""), "novoProjeto");
-				tela.loadUrl(caminho);
+				tela.loadUrl("file://" + caminho);
 				Toast.makeText(this, "projeto criado", Toast.LENGTH_LONG).show();
-            }
-            tela.addJavascriptInterface(new APIJava(this, caminho.replace("index.html", "")), "Android");
-            tela.getSettings().setJavaScriptEnabled(true);
-        } catch(Exception e) {
-            tela.loadUrl("file:///android_asset/index.html");
-        }
-    }
+			}
+
+			tela.addJavascriptInterface(new APIJava(this, caminho.replace("index.html", "")), "Android");
+
+		} catch(Exception e) {
+			tela.loadUrl("file:///android_asset/index.html");
+		}
+	}
+
+	private void configurarWebView() {
+		tela.getSettings().setJavaScriptEnabled(true);
+		tela.getSettings().setAllowFileAccess(true);
+		tela.getSettings().setAllowContentAccess(true);
+
+		if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+			tela.getSettings().setAllowFileAccessFromFileURLs(true);
+			tela.getSettings().setAllowUniversalAccessFromFileURLs(true);
+		}
+
+		// webViewClient personalizado pra lidar com navegacao local
+		tela.setWebViewClient(new WebViewClient() {
+				@Override
+				public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+					return manipularNavegacao(request.getUrl().toString());
+				}
+
+				@Override
+				public boolean shouldOverrideUrlLoading(WebView view, String url) {
+					return manipularNavegacao(url);
+				}
+
+				private boolean manipularNavegacao(String url) {
+					if (url.startsWith("file://") || url.startsWith("content://")) {
+						tela.loadUrl(url);
+						return true;
+					} else if(url.startsWith("http://") || url.startsWith("https://")) {
+						Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+						startActivity(intent);
+						return true;
+					}
+					return false;
+				}
+			});
+		tela.getSettings().setDomStorageEnabled(true);
+		tela.getSettings().setDatabaseEnabled(true);
+		if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) tela.getSettings().setAllowFileAccess(true);
+	}
 
     public void pedirPermissao() {
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
@@ -58,9 +113,7 @@ public class EngineActivity extends Activity {
                 Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
                 intent.setData(Uri.parse("package:" + this.getPackageName()));
                 this.startActivityForResult(intent, PERMISSAO);
-            } else {
-                carregarPagina();
-            }
+            } else  carregarPagina();
         } else {
             if(this.checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
                 this.requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, PERMISSAO);
@@ -92,40 +145,35 @@ public class EngineActivity extends Activity {
             }
         }
     }
-}
 
-class APIJava {
-	public String pacote;
-    public Context ctx;
-    public ArquivosUtil arq = new ArquivosUtil();
+	public class APIJava {
+		public String pacote;
+		public Context ctx;
+		public ArquivosUtil arq = new ArquivosUtil();
 
-    public APIJava(Context ctx, String pacote) {
-        this.ctx = ctx;
-		this.pacote = pacote;
-    }
+		public APIJava(Context ctx, String pacote) {
+			this.ctx = ctx;
+			this.pacote = pacote;
+		}
 
-    @JavascriptInterface
-    public void msg(String m) {
-        Toast.makeText(ctx, m, Toast.LENGTH_SHORT).show();
-    }
-	
-	@JavascriptInterface
-    public void msg(String m, int tempo) {
-        Toast.makeText(ctx, m, tempo).show();
-    }
+		@JavascriptInterface
+		public void msg(String m) {
+			Toast.makeText(ctx, m, Toast.LENGTH_SHORT).show();
+		}
 
-    @JavascriptInterface
-    public String ler(String caminho) {
-        return arq.lerCaminho(pacote+caminho);
-    }
+		@JavascriptInterface
+		public void msg(String m, int tempo) {
+			Toast.makeText(ctx, m, tempo).show();
+		}
 
-    @JavascriptInterface
-    public void arquivar(String caminho, String texto) {
-        arq.escreverArquivo(pacote+caminho, texto);
-    }
+		@JavascriptInterface
+		public String ler(String caminho) {
+			return arq.lerCaminho(pacote+caminho);
+		}
 
-	@JavascriptInterface
-    public void mudarTela(String caminho) {
-        EngineActivity.tela.loadUrl(pacote+caminho);
-    }
+		@JavascriptInterface
+		public void arquivar(String caminho, String texto) {
+			arq.escreverArquivo(pacote+caminho, texto);
+		}
+	}
 }
