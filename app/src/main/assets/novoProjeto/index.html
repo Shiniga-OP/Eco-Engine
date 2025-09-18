@@ -45,9 +45,11 @@
 	<div id="editor">
 	  <div id="editorAce"></div>
 	</div>
-
+	<div id="consoleDiv">
+	    <p id="console">console</p>
+	</div>
 <script>
-    const engine = new Engine(null, true, false);
+    const engine = new Engine("jogo", true, false);
 
     const editor = ace.edit("editorAce");
     editor.setTheme("ace/theme/monokai");
@@ -73,6 +75,7 @@
       engine.limpar();
       eval(codigo);
       Android.msg("rodando");
+      document.getElementById("console").value = Android.obterLogs();
     }
 </script>
 	<script src="jogo.js"></script>

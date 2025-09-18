@@ -18,12 +18,20 @@ import java.io.File;
 import android.webkit.WebViewClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebChromeClient;
+import java.io.PrintStream;
+import java.io.ByteArrayOutputStream;
+
+import android.app.Activity;
+import android.os.Bundle;
+import android.webkit.ConsoleMessage;
+import android.webkit.WebChromeClient;
+import android.webkit.WebView;
 
 public class EngineActivity extends Activity {
-
     public static WebView tela;
-    private static final int PERMISSAO = 1;
+    public static final int PERMISSAO = 1;
 	public String caminho;
+	public Console console = new Console();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,8 +51,9 @@ public class EngineActivity extends Activity {
 			tela.getSettings().setAllowUniversalAccessFromFileURLs(true);
 		}
 		tela.setWebChromeClient(new WebChromeClient());
-
         pedirPermissao();
+		System.setOut(console);
+		System.setErr(console);
     }
 
     public void carregarPagina() {
@@ -60,46 +69,53 @@ public class EngineActivity extends Activity {
 				tela.loadUrl("file://" + caminho);
 				Toast.makeText(this, "projeto criado", Toast.LENGTH_LONG).show();
 			}
-
 			tela.addJavascriptInterface(new APIJava(this, caminho.replace("index.html", "")), "Android");
-
 		} catch(Exception e) {
 			tela.loadUrl("file:///android_asset/index.html");
 		}
 	}
 
-	private void configurarWebView() {
+	public void configurarWebView() {
 		tela.getSettings().setJavaScriptEnabled(true);
 		tela.getSettings().setAllowFileAccess(true);
 		tela.getSettings().setAllowContentAccess(true);
+		tela.getSettings().setSupportZoom(true);
+		if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+			tela.setWebContentsDebuggingEnabled(true);
+		}
 
 		if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
 			tela.getSettings().setAllowFileAccessFromFileURLs(true);
 			tela.getSettings().setAllowUniversalAccessFromFileURLs(true);
 		}
-
 		// webViewClient personalizado pra lidar com navegacao local
 		tela.setWebViewClient(new WebViewClient() {
 				@Override
-				public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-					return manipularNavegacao(request.getUrl().toString());
+				public boolean shouldOverrideUrlLoading(WebView v, WebResourceRequest r) {
+					return manipularNavegacao(r.getUrl().toString());
 				}
 
 				@Override
-				public boolean shouldOverrideUrlLoading(WebView view, String url) {
+				public boolean shouldOverrideUrlLoading(WebView v, String url) {
 					return manipularNavegacao(url);
 				}
 
-				private boolean manipularNavegacao(String url) {
-					if (url.startsWith("file://") || url.startsWith("content://")) {
+				public boolean manipularNavegacao(String url) {
+					if(url.startsWith("file://") || url.startsWith("content://")) {
 						tela.loadUrl(url);
 						return true;
 					} else if(url.startsWith("http://") || url.startsWith("https://")) {
-						Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-						startActivity(intent);
+						startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
 						return true;
 					}
 					return false;
+				}
+			});
+		tela.setWebChromeClient(new WebChromeClient() {
+				@Override
+				public boolean onConsoleMessage(ConsoleMessage msg) {
+					console.consoleLogs += msg.message() + " @linha " + msg.lineNumber();
+					return true;
 				}
 			});
 		tela.getSettings().setDomStorageEnabled(true);
@@ -145,6 +161,18 @@ public class EngineActivity extends Activity {
             }
         }
     }
+	
+	public class Console extends PrintStream {
+		public String consoleLogs = "";
+		public Console() {
+			super(new ByteArrayOutputStream());
+		}
+
+		@Override
+		public void println(Object o) {
+			consoleLogs += String.valueOf(o) + "\n";
+		}
+	}
 
 	public class APIJava {
 		public String pacote;
@@ -174,6 +202,16 @@ public class EngineActivity extends Activity {
 		@JavascriptInterface
 		public void arquivar(String caminho, String texto) {
 			arq.escreverArquivo(pacote+caminho, texto);
+		}
+		
+		@JavascriptInterface
+		public String obterLogs() {
+			return console.consoleLogs;
+		}
+		
+		@JavascriptInterface
+		public void limparLogs() {
+			console.consoleLogs = "";
 		}
 	}
 }
