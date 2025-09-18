@@ -18,7 +18,7 @@ import android.view.View;
 public class EngineActivity extends Activity {
 
     public static WebView tela;
-    private static final int PERMISSAO = 1;
+    public static final int PERMISSAO = 1;
 	public String caminho;
 
     @Override
