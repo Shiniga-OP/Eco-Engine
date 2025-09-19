@@ -525,3 +525,232 @@ class Camera {
     }
   }
 }
+
+class EditorMapas {
+    constructor(tilesImgId="tiles", canvasId="telaJogo") {
+        this.engine = new Engine(canvasId, false);
+        this.modo = "desenhar"; // "desenhar" ou "apagar"
+        this.camadaAtual = 0;
+        this.tileSelecionado = { x: 0, y: 0 };
+        this.tamanhoTile = 16;
+        this.mapaTiles = [];
+        this.tilesetImg = document.getElementById("tiles");
+        this.tilesetCanvas = document.createElement("canvas");
+        this.tilesetCtx = this.tilesetCanvas.getContext("2d");
+        
+        this.inicializarTileset();
+        this.inicializarMapa(40, 30); // 40x30 tiles
+        this.atualizarListaCamadas();
+      }
+      
+      inicializarTileset() {
+        if(!this.tilesetImg) return;
+        this.tilesetImg.onload = () => {
+          this.tilesetCanvas.width = this.tilesetImg.naturalWidth || this.tilesetImg.width;
+          this.tilesetCanvas.height = this.tilesetImg.naturalHeight || this.tilesetImg.height;
+          this.tilesetCtx.clearRect(0,0,this.tilesetCanvas.width,this.tilesetCanvas.height);
+          this.tilesetCtx.drawImage(this.tilesetImg, 0, 0);
+        };
+        if(this.tilesetImg.complete && this.tilesetImg.naturalWidth) {
+          this.tilesetImg.onload();
+        }
+      }
+      
+      inicializarMapa(largura, altura) {
+        for(let i = 0; i < this.engine.camadas.length; i++) {
+          this.mapaTiles[i] = Array.from({ length: altura }, () => 
+            Array.from({ length: largura }, () => null)
+          );
+        }
+      }
+      
+      selecionarTile(e) {
+        const rect = this.tilesetImg.getBoundingClientRect();
+        const escalaX = this.tilesetImg.naturalWidth / rect.width;
+        const escalaY = this.tilesetImg.naturalHeight / rect.height;
+        const px = (e.touches[0].clientX - rect.left) * escalaX;
+        const py = (e.touches[0].clientY - rect.top) * escalaY;
+        
+        const x = Math.floor(px / this.tamanhoTile);
+        const y = Math.floor(py / this.tamanhoTile);
+        this.tileSelecionado = { x, y };
+      }
+      
+      colocarTile(e) {
+        if(this.modo != "desenhar") return;
+        
+        const rect = this.engine.canvas.getBoundingClientRect();
+        const x = Math.floor((e.touches[0].clientX - rect.left) / this.tamanhoTile);
+        const y = Math.floor((e.touches[0].clientY - rect.top) / this.tamanhoTile);
+        
+        if(x < 0 || y < 0 || x >= this.mapaTiles[0][0].length || y >= this.mapaTiles[0].length) return;
+        
+        const tileExistente = this.mapaTiles[this.camadaAtual][y][x];
+        if(tileExistente) this.engine.rm(tileExistente, this.engine.camadas[this.camadaAtual]);
+        
+        const novoTile = this.engine.novoSprite(
+          this.tilesetImg.src,
+          this.engine.camadas[this.camadaAtual]
+        );
+        novoTile.x = x * this.tamanhoTile;
+        novoTile.y = y * this.tamanhoTile;
+        novoTile.escalaX = this.tamanhoTile;
+        novoTile.escalaY = this.tamanhoTile;
+        
+        novoTile.imagem = this.tilesetImg;
+        novoTile.sx = this.tileSelecionado.x * this.tamanhoTile;
+        novoTile.sy = this.tileSelecionado.y * this.tamanhoTile;
+        novoTile.sEX = this.tamanhoTile;
+        novoTile.sEY = this.tamanhoTile;
+        
+        this.mapaTiles[this.camadaAtual][y][x] = novoTile;
+        
+        this.engine.renderizar();
+      }
+      
+      tirarTile(e) {
+        if(this.modo != "apagar") return;
+        
+        const rect = this.engine.canvas.getBoundingClientRect();
+        const x = Math.floor((e.touches[0].clientX - rect.left) / this.tamanhoTile);
+        const y = Math.floor((e.touches[0].clientY - rect.top) / this.tamanhoTile);
+        
+        if(x < 0 || y < 0 || x >= this.mapaTiles[0][0].length || y >= this.mapaTiles[0].length) return;
+
+        const tile = this.mapaTiles[this.camadaAtual][y][x];
+        if(tile) {
+          this.engine.rm(tile, this.engine.camadas[this.camadaAtual]);
+          this.mapaTiles[this.camadaAtual][y][x] = null;
+        }
+        this.engine.renderizar();
+      }
+      
+      novaCamada() {
+        const camada = this.engine.novaCamada();
+        const altura = this.mapaTiles[0].length;
+        const largura = this.mapaTiles[0][0].length;
+        this.mapaTiles.push(Array.from({ length: altura }, () => 
+          Array.from({ length: largura }, () => null)
+        ));
+        this.atualizarListaCamadas();
+        return camada;
+      }
+      
+      removerCamada() {
+        if(this.engine.camadas.length <= 1) {
+          alert("Não é possível remover a última camada.");
+          return;
+        }
+        const camada = this.engine.camadas[this.camadaAtual];
+        while(camada.length > 0) this.engine.rm(camada[0], camada);
+        
+        this.engine.camadas.splice(this.camadaAtual, 1);
+        this.mapaTiles.splice(this.camadaAtual, 1);
+        
+        if(this.camadaAtual >= this.engine.camadas.length) this.camadaAtual = this.engine.camadas.length - 1;
+        
+        this.atualizarListaCamadas();
+        this.engine.renderizar();
+      }
+      
+      selecionarCamada(indice) {
+        this.camadaAtual = indice;
+        this.atualizarListaCamadas();
+      }
+      
+      atualizarListaCamadas() {
+        const lista = document.getElementById("listaCamadas");
+        lista.innerHTML = "";
+        
+        for(let i = 0; i < this.engine.camadas.length; i++) {
+          const btn = document.createElement("button");
+          btn.textContent = `Camada ${i} ${i === this.camadaAtual ? "(Ativa)" : ""}`;
+          btn.addEventListener("click", () => this.selecionarCamada(i));
+          lista.appendChild(btn);
+        }
+      }
+      
+      salvarMapa() {
+        const dadosMapa = {
+          tileset: this.tilesetImg.src,
+          tamanhoTile: this.tamanhoTile,
+          camadas: []
+        };
+        for(let c = 0; c < this.mapaTiles.length; c++) {
+          const camada = [];
+          for(let y = 0; y < this.mapaTiles[c].length; y++) {
+            const linha = [];
+            for(let x = 0; x < this.mapaTiles[c][y].length; x++) {
+              const tile = this.mapaTiles[c][y][x];
+              if(tile) {
+                linha.push({
+                  sx: tile.sx,
+                  sy: tile.sy,
+                  sEX: tile.sEX,
+                  sEY: tile.sEY
+                });
+              } else linha.push(null);
+            }
+            camada.push(linha);
+          }
+          dadosMapa.camadas.push(camada);
+        }
+        document.getElementById("json").value = "mapa.json";
+        Android.arquivar("mapa.json", JSON.stringify(dadosMapa));
+        alert("Mapa salvo no campo JSON!");
+      }
+      
+      carregarMapa() {
+        try {
+          const jsonStr = Android.ler(document.getElementById("json").value);
+          if(!jsonStr) {
+            alert("Nenhum JSON fornecido.");
+            return;
+          }
+          
+          const dadosMapa = JSON.parse(jsonStr);
+          
+          this.engine.limpar();
+          this.mapaTiles = [];
+          
+          this.tilesetImg.src = dadosMapa.tileset;
+          this.tamanhoTile = dadosMapa.tamanhoTile || 16;
+          
+          for(let c = 0; c < dadosMapa.camadas.length; c++) {
+            const camadaDados = dadosMapa.camadas[c];
+            const camada = c === 0 ? this.engine.camada : this.engine.novaCamada();
+            
+            this.mapaTiles[c] = Array.from({ length: camadaDados.length }, () => 
+              Array.from({ length: camadaDados[0].length }, () => null)
+            );
+            for(let y = 0; y < camadaDados.length; y++) {
+              for(let x = 0; x < camadaDados[y].length; x++) {
+                const tileDados = camadaDados[y][x];
+                if(tileDados) {
+                  const tile = this.engine.novoSprite(
+                    this.tilesetImg.src,
+                    camada
+                  );
+                  tile.x = x * this.tamanhoTile;
+                  tile.y = y * this.tamanhoTile;
+                  tile.escalaX = this.tamanhoTile;
+                  tile.escalaY = this.tamanhoTile;
+                  tile.imagem = this.tilesetImg;
+                  tile.sx = tileDados.sx;
+                  tile.sy = tileDados.sy;
+                  tile.sEX = tileDados.sEX;
+                  tile.sEY = tileDados.sEY;
+                  this.mapaTiles[c][y][x] = tile;
+                }
+              }
+            }
+          }
+          this.camadaAtual = 0;
+          this.atualizarListaCamadas();
+          this.engine.renderizar();
+          alert("Mapa carregado com sucesso!");
+        } catch(e) {
+          alert("Erro ao carregar mapa: " + e.message);
+        }
+      }
+}

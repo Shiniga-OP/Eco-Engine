@@ -1,83 +1,174 @@
+<!--0.0.1-->
 <!DOCTYPE html>
 <html>
   <head>
 	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>interface</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Eco-Engine</title>
 	<script src="engine.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.3/ace.js"></script>
-  </head>
 <style>
-  html {
-    background-color: darkgrey;
-  }
-  #barraUtils {
-    background: dimgrey;
-  }
-  #jogo {
-    background: black;
-  }
-  #editor {
-    position: absolute;
-    left: 10px;
-    top: 350px;
-    width: 550px;
-    height: 300px;
-    border: 1px solid #444;
-    box-sizing: border-box;
-  }
-  #editorAce {
-    width: 100%;
-    height: 100%;
-    font-size: 14px;
-  }
+html, body {
+  margin:0;
+  padding:0;
+  height:100%;
+  background:#111;
+  color:#0f0;
+  font-family:monospace;
+  overflow:hidden;
+}
+#barraFerramentas {
+  display:flex;
+  padding:5px;
+}
+#barraFerramentas select, input, button {
+  margin-right:5px;
+  background:#111;
+  border:1px solid #444;
+  color:#0f0;
+  padding:5px;
+  cursor:pointer;
+}
+#barraFerramentas input { width:120px; }
+#conteudo {
+  height:calc(100% - 42px);
+  position:relative;
+  background:#000;
+}
+.pagina {
+  display:none;
+  position:absolute;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+}
+.pagina.ativa { display:block; }
+#telaJogo {
+  width:550px;
+  height:300px;
+  background:#000;
+  display:block;
+  margin:auto;
+  image-rendering:pixelated;
+  position:absolute;
+  top:0; bottom:0; left:0; right:0;
+}
+#editorCodigo {
+  width:100%;
+  height:100%;
+}
+#editorMapas {
+  width:100%;
+  height:100%;
+  display:block;
+}
+#console {
+    position:absolute;
+    bottom:0;
+    left:0;
+    width:100%;
+    height:100%;
+    overflow:auto;
+    background:#000;
+    border-top:1px solid #444;
+    color:#0f0;
+    font-family:monospace;
+    font-size:12px;
+    white-space:pre-wrap;
+}
 </style>
+  </head>
   <body>
-	<div id="barraUtils">
-	  <button onClick="executar()">rodar</button>
-	  <button onClick="salvar()">salvar</button>
-	  <input id="arqSele" type="text" value="jogo.js">
-	  <button onClick="abrir()">abrir</button>
+	<div id="barraFerramentas">
+	  <select id="listaPaginas" onchange="trocarPagina(this.value)">
+		<option value="jogo">Jogo</option>
+		<option value="editor">Editor</option>
+		<option value="console">Console</option>
+		<option value="editorTiles">Editor de mapas</option>
+	  </select>
+	  <button onclick="abrir()">Abrir</button>
+	  <input id="nomeArquivo" type="text" value="jogo.js">
+	  <button onclick="salvar()">Salvar</button>
+	  <button onclick="executar()">Rodar</button>
+	  <button onclick="trocarPaginaB()"><</button>
+	  <button onclick="trocarPaginaP()">></button>
 	</div>
-	<div>
-	  <canvas id="jogo" width="550" height="300"></canvas>
-	</div>
-	<div id="editor">
-	  <div id="editorAce"></div>
-	</div>
-	<div id="consoleDiv">
-	    <p id="console">console</p>
+	<div id="conteudo">
+	  <div id="editorTiles" class="pagina">
+		<iframe id="editorMapas"></iframe>
+	  </div>
+	  <div id="jogo" class="pagina ativa">
+		<canvas id="telaJogo"></canvas>
+	  </div>
+	  <div id="editor" class="pagina">
+		<div id="editorCodigo"></div>
+	  </div>
+	  <div id="console" class="pagina"></div>
 	</div>
 <script>
-    const engine = new Engine("jogo", true, false);
-
-    const editor = ace.edit("editorAce");
-    editor.setTheme("ace/theme/monokai");
-    editor.session.setMode("ace/mode/javascript");
-
-    abrir();
-
-    function salvar() {
-      let arquivo = document.getElementById("arqSele").value.trim();
-      Android.arquivar(arquivo, editor.getValue());
-      Android.msg("projeto salvo em: " + arquivo);
-      editor.setValue(Android.ler(arquivo), -1);
-    }
-
-    function abrir() {
-      let arquivo = document.getElementById("arqSele").value.trim();
-      editor.setValue(Android.ler(arquivo), -1);
-      Android.msg("arquivo aberto");
-    }
-
-    function executar() {
-      let codigo = editor.getValue();
-      engine.limpar();
-      eval(codigo);
-      Android.msg("rodando");
-      document.getElementById("console").value = Android.obterLogs();
-    }
+const antigoConsoleLog = console.log;
+console.log = function(){
+    antigoConsoleLog.apply(console, arguments);
+    const msg = Array.prototype.slice.call(arguments).join(" ");
+    const div = document.getElementById("console");
+    if(div) div.innerHTML += msg + "\n";
+};
 </script>
-	<script src="jogo.js"></script>
+<script>
+const engine = new Engine("telaJogo", true, false);
+const editor = ace.edit("editorCodigo");
+editor.setTheme("ace/theme/monokai");
+editor.session.setMode("ace/mode/javascript");
+console.log("~ $ console...");
+
+function trocarPagina(id) {
+  const paginas = document.querySelectorAll(".pagina");
+  for(let i=0; i<paginas.length; i++) paginas[i].classList.remove("ativa");
+  document.getElementById(id).classList.add("ativa");
+  if(id == "editorTiles") document.getElementById("editorMapas").src = "editorTiles.html";
+}
+
+function trocarPaginaB() {
+  const lista = ["jogo", "editor", "console", "editorTiles"];
+  const atual = document.getElementById("listaPaginas").value;
+  let indice = lista.indexOf(atual);
+  if (indice > 0) indice--;
+  trocarPagina(lista[indice]);
+  document.getElementById("listaPaginas").value = lista[indice];
+}
+
+function trocarPaginaP() {
+  const lista = ["jogo", "editor", "console", "editorTiles"];
+  const atual = document.getElementById("listaPaginas").value;
+  let indice = lista.indexOf(atual);
+  if (indice < lista.length - 1) indice++;
+  trocarPagina(lista[indice]);
+  document.getElementById("listaPaginas").value = lista[indice];
+}
+
+function salvar() {
+  const arq = document.getElementById("nomeArquivo").value.trim();
+  Android.arquivar(arq, editor.getValue());
+  Android.msg("Projeto salvo em: "+arq);
+}
+
+function abrir() {
+  const arq = document.getElementById("nomeArquivo").value.trim();
+  editor.setValue(Android.ler(arq), -1);
+  Android.msg("Arquivo aberto");
+}
+
+function executar() {
+  console.clear();
+  document.getElementById("console").innerHTML = "";
+  console.log("~ $ console...");
+  engine.limpar();
+  Android.limparLogs();
+  Android.msg("Rodando...");
+  eval(editor.getValue());
+}
+abrir();
+</script>
   </body>
 </html>

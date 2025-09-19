@@ -66,7 +66,7 @@ public class EngineActivity extends Activity {
 				tela.loadUrl("file://" + caminho);
 				Toast.makeText(this, "projeto criado", Toast.LENGTH_LONG).show();
 			}
-			tela.addJavascriptInterface(new APIJava(this, caminho.replace("index.html", "")), "Android");
+			tela.addJavascriptInterface(new APIJava(this, caminho.replace("index.html", ""), console), "Android");
 		} catch(Exception e) {
 			tela.loadUrl("file:///android_asset/index.html");
 		}
@@ -110,7 +110,7 @@ public class EngineActivity extends Activity {
 		tela.setWebChromeClient(new WebChromeClient() {
 				@Override
 				public boolean onConsoleMessage(ConsoleMessage msg) {
-					console.consoleLogs += msg.message() + " linha " + msg.lineNumber() + "\n";
+					console.consoleLogs += msg.message() + " \n";
 					return true;
 				}
 			});
@@ -173,11 +173,13 @@ public class EngineActivity extends Activity {
 	public class APIJava {
 		public String pacote;
 		public Context ctx;
+		public Console console;
 		public ArquivosUtil arq = new ArquivosUtil();
 
-		public APIJava(Context ctx, String pacote) {
+		public APIJava(Context ctx, String pacote, Console console) {
 			this.ctx = ctx;
 			this.pacote = pacote;
+			this.console = console;
 		}
 
 		@JavascriptInterface
@@ -198,6 +200,11 @@ public class EngineActivity extends Activity {
 		@JavascriptInterface
 		public void arquivar(String caminho, String texto) {
 			arq.escreverArquivo(pacote+caminho, texto);
+		}
+		
+		@JavascriptInterface
+		public void deletar(String caminho, String texto) {
+			arq.deleteArquivo(pacote+caminho);
 		}
 		
 		@JavascriptInterface

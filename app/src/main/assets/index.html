@@ -1,12 +1,12 @@
 <!--0.0.1-->
 <!DOCTYPE html>
 <html>
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Eco-Engine</title>
-<script src="engine.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.3/ace.js"></script>
+  <head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Eco-Engine</title>
+	<script src="engine.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.3/ace.js"></script>
 <style>
 html, body {
   margin:0;
@@ -63,46 +63,88 @@ html, body {
   height:100%;
   display:block;
 }
+#console {
+    position:absolute;
+    bottom:0;
+    left:0;
+    width:100%;
+    height:100%;
+    overflow:auto;
+    background:#000;
+    border-top:1px solid #444;
+    color:#0f0;
+    font-family:monospace;
+    font-size:12px;
+    white-space:pre-wrap;
+}
 </style>
-</head>
-<body>
-<div id="barraFerramentas">
-  <select id="listaPaginas" onchange="trocarPagina(this.value)">
-    <option value="jogo">Jogo</option>
-    <option value="editor">Editor</option>
-    <option value="console">Console</option>
-    <option value="editorTiles">Editor de mapas</option>
-  </select>
-  <button onclick="abrir()">Abrir</button>
-  <input id="nomeArquivo" type="text" value="jogo.js">
-  <button onclick="salvar()">Salvar</button>
-  <button onclick="executar()">Rodar</button>
-</div>
-<div id="conteudo">
-  <div id="editorTiles" class="pagina">
-      <iframe id="editorMapas"></iframe>
-  </div>
-  <div id="jogo" class="pagina ativa">
-    <canvas id="telaJogo"></canvas>
-  </div>
-  <div id="editor" class="pagina">
-    <div id="editorCodigo"></div>
-  </div>
-  <div id="console" class="pagina">
-    <div id="consoleLogs"></div>
-  </div>
-</div>
+  </head>
+  <body>
+	<div id="barraFerramentas">
+	  <select id="listaPaginas" onchange="trocarPagina(this.value)">
+		<option value="jogo">Jogo</option>
+		<option value="editor">Editor</option>
+		<option value="console">Console</option>
+		<option value="editorTiles">Editor de mapas</option>
+	  </select>
+	  <button onclick="abrir()">Abrir</button>
+	  <input id="nomeArquivo" type="text" value="jogo.js">
+	  <button onclick="salvar()">Salvar</button>
+	  <button onclick="executar()">Rodar</button>
+	  <button onclick="trocarPaginaB()"><</button>
+	  <button onclick="trocarPaginaP()">></button>
+	</div>
+	<div id="conteudo">
+	  <div id="editorTiles" class="pagina">
+		<iframe id="editorMapas"></iframe>
+	  </div>
+	  <div id="jogo" class="pagina ativa">
+		<canvas id="telaJogo"></canvas>
+	  </div>
+	  <div id="editor" class="pagina">
+		<div id="editorCodigo"></div>
+	  </div>
+	  <div id="console" class="pagina"></div>
+	</div>
+<script>
+const antigoConsoleLog = console.log;
+console.log = function(){
+    antigoConsoleLog.apply(console, arguments);
+    const msg = Array.prototype.slice.call(arguments).join(" ");
+    const div = document.getElementById("console");
+    if(div) div.innerHTML += msg + "\n";
+};
+</script>
 <script>
 const engine = new Engine("telaJogo", true, false);
 const editor = ace.edit("editorCodigo");
 editor.setTheme("ace/theme/monokai");
 editor.session.setMode("ace/mode/javascript");
+console.log("~ $ console...");
 
 function trocarPagina(id) {
   const paginas = document.querySelectorAll(".pagina");
   for(let i=0; i<paginas.length; i++) paginas[i].classList.remove("ativa");
   document.getElementById(id).classList.add("ativa");
-  document.getElementById("editorMapas").src = "editorTiles.html";
+  if(id == "editorTiles") document.getElementById("editorMapas").src = "editorTiles.html";
+}
+
+function trocarPaginaB() {
+  const lista = ["jogo", "editor", "console", "editorTiles"];
+  const atual = document.getElementById("listaPaginas").value;
+  let indice = lista.indexOf(atual);
+  if (indice > 0) indice--;
+  trocarPagina(lista[indice]);
+  document.getElementById("listaPaginas").value = lista[indice];
+}
+
+function trocarPaginaP() {
+  const lista = ["jogo", "editor", "console", "editorTiles"];
+  const atual = document.getElementById("listaPaginas").value;
+  let indice = lista.indexOf(atual);
+  if (indice < lista.length - 1) indice++;
+  trocarPagina(lista[indice]);
+  document.getElementById("listaPaginas").value = lista[indice];
 }
 
 function salvar() {
@@ -118,10 +160,14 @@ function abrir() {
 }
 
 function executar() {
+  console.clear();
+  document.getElementById("console").innerHTML = "";
+  console.log("~ $ console...");
   engine.limpar();
+  Android.limparLogs();
+  Android.msg("Rodando...");
   eval(editor.getValue());
-  Android.msg("Rodando");
 }
 </script>
-</body>
+  </body>
 </html>
