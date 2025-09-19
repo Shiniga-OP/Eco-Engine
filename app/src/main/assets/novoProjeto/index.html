@@ -45,12 +45,10 @@ html, body {
 }
 .pagina.ativa { display:block; }
 #telaJogo {
-  width:550px;
-  height:300px;
+  border:1px solid #444;
   background:#000;
   display:block;
   margin:auto;
-  image-rendering:pixelated;
   position:absolute;
   top:0; bottom:0; left:0; right:0;
 }
@@ -114,8 +112,7 @@ console.log = function(){
     const div = document.getElementById("console");
     if(div) div.innerHTML += msg + "\n";
 };
-</script>
-<script>
+let dev = false;
 const engine = new Engine("telaJogo", true, false);
 const editor = ace.edit("editorCodigo");
 editor.setTheme("ace/theme/monokai");
@@ -149,14 +146,16 @@ function trocarPaginaP() {
 
 function salvar() {
   const arq = document.getElementById("nomeArquivo").value.trim();
-  Android.arquivar(arq, editor.getValue());
-  Android.msg("Projeto salvo em: "+arq);
+  if(!dev) {
+      Android.arquivar(arq, editor.getValue());
+      Android.msg("Projeto salvo em: "+arq);
+  }
 }
 
 function abrir() {
   const arq = document.getElementById("nomeArquivo").value.trim();
   editor.setValue(Android.ler(arq), -1);
-  Android.msg("Arquivo aberto");
+  if(!dev) Android.msg("Arquivo aberto");
 }
 
 function executar() {
@@ -164,11 +163,14 @@ function executar() {
   document.getElementById("console").innerHTML = "";
   console.log("~ $ console...");
   engine.limpar();
-  Android.limparLogs();
-  Android.msg("Rodando...");
+  if(!dev) {
+      Android.limparLogs();
+      Android.msg("Rodando...");
+  }
   eval(editor.getValue());
 }
-abrir();
+if(!dev) abrir();
+editor.setValue("const b = {\n  x: 0, y: 0,\n  escalaX: 60, escalaY: 60,\n  cor: \"blue\", click: () => console.log(\"teste\")\n};\nengine.addBotao(b);", -1);
 </script>
   </body>
 </html>

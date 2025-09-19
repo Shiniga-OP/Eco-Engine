@@ -72,15 +72,7 @@
   <script src="engine.js"></script>
 </head>
 <body>
-  <button class="botao" id="play">▶</button>
-  <button class="botao" id="mais">+</button>
-  <button class="botao" id="pause">⏸</button>
-  <button class="botao" id="pastas">📁</button>
-  <button class="botao" id="opcoes">⚙</button>
-  <button class="botao" id="lapis">✏</button>
-  <button class="botao" id="borracha">🧽</button>
-  <button class="botao" id="movimento">✥</button>
-  <button class="botao" id="imagem">🖼</button>
+  <button class="botao" id="multuso" onClick="ativar()">✏️</button>
   <canvas id="telaJogo" width="400" height="300"></canvas>
   <!-- seletor de tiles -->
   <div id="tileDiv">
@@ -105,25 +97,25 @@
     const editor = new EditorMapas("tiles", "telaJogo");
     editor.tilesetImg.addEventListener("touchstart", (e) => editor.selecionarTile(e));
         editor.engine.canvas.addEventListener("touchstart", (e) => {
-          if(editor.modo == "desenhar") editor.colocarTile(e);
-          else if(editor.modo == "apagar") editor.tirarTile(e);
+          if(editor.modo == "desenhar") editor.addTile(e);
+          else if(editor.modo == "apagar") editor.rmTile(e);
         });
         
         editor.engine.canvas.addEventListener("touchmove", (e) => {
-          if(editor.modo == "desenhar") editor.colocarTile(e);
-          else if(editor.modo == "apagar") editor.tirarTile(e);
+          if(editor.modo == "desenhar") editor.addTile(e);
+          else if(editor.modo == "apagar") editor.rmTile(e);
         });
-        document.getElementById("lapis").addEventListener("click", () => editor.modo = "desenhar");
-        
-        document.getElementById("borracha").addEventListener("click", () => editor.modo = "apagar");
         
         document.getElementById("novaCamada").addEventListener("click", () => editor.novaCamada());
         
-        document.getElementById("removerCamada").addEventListener("click", () => editor.removerCamada());
+        document.getElementById("removerCamada").addEventListener("click", () => editor.rmCamada());
         
-        document.getElementById("salvarTile").addEventListener("click", () => editor.salvarMapa());
+        document.getElementById("salvarTile").addEventListener("click", () => {
+          Android.arquivar("mapa.json", JSON.stringify(editor.salvarMapa()));
+          alert("Mapa salvo no campo JSON!");
+        });
         
-        document.getElementById("carregarTile").addEventListener("click", () => editor.carregarMapa());
+        document.getElementById("carregarTile").addEventListener("click", () => editor.carregarMapa(Android.ler(document.getElementById("json").value)));
         
         document.getElementById("imgTileset").addEventListener("change", (e) => {
           const arquivo = e.target.files[0];
@@ -131,7 +123,7 @@
             const leitor = new FileReader();
             leitor.onload = (evento) => {
               editor.tilesetImg.onload = () => {
-                editor.inicializarTileset();
+                editor.iniciarTileset();
                 editor.engine.renderizar();
               };
               editor.tilesetImg.src = evento.target.result;
@@ -148,6 +140,27 @@
     editor.engine.renderizar();
     new ArrastavelHtml("tileDiv", 16, false);
     new ArrastavelHtml("camadaControles", 16, false);
+    editor.engine.zoom = new Zoom("telaJogo");
+    editor.engine.zoom.ativo = false;
+    
+    function ativar() {
+      if(editor.modo == "desenhar") {
+        editor.modo = "apagar"
+        editor.ativo = true;
+        editor.engine.zoom.ativo = false;
+        document.getElementById("multuso").textContent = "🧽";
+      } else if(editor.modo == "apagar") {
+        editor.modo = "vazio";
+        editor.ativo = false;
+        editor.engine.zoom.ativo = true;
+        document.getElementById("multuso").textContent = "✥";
+      } else if(editor.engine.zoom.ativo) {
+        editor.modo = "desenhar";
+        editor.ativo = true;
+        editor.engine.zoom.ativo = false;
+        document.getElementById("multuso").textContent = "✏️";
+      }
+    }
   </script>
 </body>
 </html>

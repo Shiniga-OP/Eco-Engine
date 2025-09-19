@@ -17,9 +17,24 @@ class Engine {
     this.renderizacao = renderAutomatico;
     this.tamPadrao = 32;
     this.camera;
+    this.zoom;
     
     if(this.renderizacao) this.renderizar();
     if(canvasCompleto) this.ajustarTela();
+  }
+  
+  obterCoordGlobal(e) {
+    const toque = e.touches[0];
+    const rect = this.canvas.getBoundingClientRect();
+    const x = toque.clientX - rect.left;
+    const y = toque.clientY - rect.top;
+
+    if(this.zoom) {
+      const mundoX = (x - this.zoom.panX) / this.zoom.escala;
+      const mundoY = (y - this.zoom.panY) / this.zoom.escala;
+      return { x: mundoX, y: mundoY };
+    }
+    return { x, y };
   }
   
   novaCamada(renderizarAutomatico=true) {
@@ -49,46 +64,48 @@ class Engine {
   }
   
   rodarAnimacao(alvo=Sprite, animacao=[], repetir=1, intervalo=0.5, inicio=0) {
-    
     let frame = inicio;
-      alvo.imagem.src = animacao[frame];
-      frame++;
-      
-      setTimeout(() => {
-        if(frame<animacao.length) {
-          requestAnimationFrame(() => this.rodarAnimacao(alvo, animacao, repetir, intervalo, frame));
-        }
+    alvo.imagem.src = animacao[frame];
+    frame++;
+    
+    setTimeout(() => {
+      if(frame < animacao.length) {
+        requestAnimationFrame(() => this.rodarAnimacao(alvo, animacao, repetir, intervalo, frame));
+      }
     }, intervalo * 1000);
   }
   
-  renderizar(canvasOculto) {
+  renderizar() {
+    this.ctx.save();
+
+    this.ctx.setTransform(1, 0, 0, 1, 0, 0);
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+    if(this.zoom && !this.zoom.ctx) this.zoom.ctx = this.ctx;
+    if(this.zoom) this.zoom.aplicarTransformacao();
     if(this.camera) this.camera.att();
+
     for(const camada of this.camadas) {
       for(const sprite of camada) {
         try {
-          // spriteheet, heet? a foda-se, alguma coisa assim
           if(sprite.sx != null) {
               this.ctx.drawImage(
                 sprite.imagem,
                 sprite.sx, sprite.sy, sprite.sEX, sprite.sEY,
                 sprite.x, sprite.y, sprite.escalaX, sprite.escalaY
               );
-              // sprite completa:
             } else if(sprite.imagem != null && sprite.imagem.complete) {
               this.ctx.drawImage(
                 sprite.imagem,
                 sprite.x, sprite.y,
                 sprite.escalaX, sprite.escalaY
             );
-            // objeto sem imagem:
             } else if(sprite.cor != null && sprite.texto == null) {
               this.ctx.fillStyle = sprite.cor;
               this.ctx.fillRect(
                 sprite.x, sprite.y,
                 sprite.escalaX, sprite.escalaY
               );
-              // texto:
             } else if(sprite.texto) {
               if(sprite.texto.includes("\n")) {
                 const array = sprite.texto.split("\n");
@@ -123,54 +140,24 @@ class Engine {
         }
       }
     }
-    if(canvasOculto) this.ctx.drawImage(canvasOculto, 0, 0);
-    if(this.renderizacao) requestAnimationFrame(() => this.renderizar(canvasOculto), this.canvas);
+    this.ctx.restore();
+    requestAnimationFrame(() => this.renderizar());
   }
   
-  renderizacaoOculta(mapa) {
-    const canvasOculto = document.createElement("canvas");
-    const contextoOculto = canvasOculto.getContext("2d");
-    
-    if(mapa) {
-      for(const tile of mapa) {
-        contextoOculto.drawImage(
-          tile.imagem,
-          tile.x, tile.y,
-          tile.escalaX, tile.escalaY
-        );
-      }
-    } else {
-      for(const camada of this.camadas) {
-        for(const sprite of camada) {
-          contextoOculto.drawImage(
-            sprite.imagem, 
-            sprite.x, sprite.y,
-            sprite.escalaX, sprite.escalaY
-          );
-        }
-      }
-    }
-    return canvasOculto;
-  }
-  
-  solido(s1, s2, elasticidade = 0.8, atrito = 0.3) {
+  solido(s1, s2, elasticidade=0.8, atrito=0.3) {
     if(s1.x + s1.escalaX <= s2.x || 
         s1.x >= s2.x + s2.escalaX || 
         s1.y + s1.escalaY <= s2.y || 
         s1.y >= s2.y + s2.escalaY) {
         return false;
     }
-    // calcula sobreposição real
     const sobreX = Math.min(s1.x + s1.escalaX, s2.x + s2.escalaX) - Math.max(s1.x, s2.x);
     const sobreY = Math.min(s1.y + s1.escalaY, s2.y + s2.escalaY) - Math.max(s1.y, s2.y);
-    // resolve no eixo de menor sobreposição
     if(sobreX < sobreY) {
-        // colisão horizontal
         if(s1.x < s2.x) s1.x = s2.x - s1.escalaX;
         else s1.x = s2.x + s2.escalaX;
         s1.vx = -s1.vx * elasticidade;
     } else {
-        // colisão vertical
         if(s1.y < s2.y) s1.y = s2.y - s1.escalaY;
         else s1.y = s2.y + s2.escalaY;
         s1.vy = -s1.vy * elasticidade;
@@ -180,14 +167,12 @@ class Engine {
   
   novoMapa(json, tiles, x=0, y=0, escala=16, camada=this.camada) {
     const solidos = [];
-    
     function verificacao(tile, item, listaSolidos) {
       if(listaSolidos.includes(tile)) solidos.push(item);
     }
     for(let linha=0; linha<json.mapa.length; linha++) {
       for(let coluna=0; coluna<json.mapa[linha].length; coluna++) {
         const tipoTile = json.mapa[linha][coluna];
-        
         if(tipoTile != "ar") {
           const tile = tiles[tipoTile];
           const novoTile = this.add(new Sprite(tile, x+coluna*escala, y+linha*escala, escala, escala), camada);
@@ -222,14 +207,13 @@ class Engine {
     if(sprite.click) {
       this.canvas.addEventListener('touchstart', (evento) => {
         evento.preventDefault();
-        const toqueX = evento.touches[0].clientX - this.canvas.getBoundingClientRect().left;
-        const toqueY = evento.touches[0].clientY - this.canvas.getBoundingClientRect().top;
+        const coords = this.obterCoordGlobal(evento);
         
         if(
-          toqueX >= sprite.x &&
-          toqueX <= sprite.x + sprite.escalaX &&
-          toqueY >= sprite.y &&
-          toqueY <= sprite.y + sprite.escalaY) {
+          coords.x >= sprite.x &&
+          coords.x <= sprite.x + sprite.escalaX &&
+          coords.y >= sprite.y &&
+          coords.y <= sprite.y + sprite.escalaY) {
             sprite.click(evento);
           }
       });
@@ -237,15 +221,13 @@ class Engine {
     if(sprite.pressionado) {
       this.canvas.addEventListener('touchstart', (evento) => {
         evento.preventDefault();
-        
-        const toqueX = evento.touches[0].clientX - this.canvas.getBoundingClientRect().left;
-        const toqueY = evento.touches[0].clientY - this.canvas.getBoundingClientRect().top;
+        const coords = this.obterCoordGlobal(evento);
         
         if(
-          toqueX >= sprite.x &&
-          toqueX <= sprite.x + sprite.escalaX &&
-          toqueY >= sprite.y &&
-          toqueY <= sprite.y + sprite.escalaY
+          coords.x >= sprite.x &&
+          coords.x <= sprite.x + sprite.escalaX &&
+          coords.y >= sprite.y &&
+          coords.y <= sprite.y + sprite.escalaY
           ) {
             pressionado = true;
             
@@ -359,7 +341,6 @@ class Engine {
     this.camadas = [];
     this.camada = [];
     this.camadas.push(this.camada);
-    
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
   }
   
@@ -412,7 +393,6 @@ class Particula {
     att(larguraCanvas, alturaCanvas) {
       this.comportamento();
         this.vida -= 1;
-
         if(this.sprite.x < 0 || this.sprite.x > larguraCanvas || this.sprite.y < 0 || this.sprite.y > alturaCanvas || this.vida <= 0) {
             return false;
         }
@@ -422,7 +402,6 @@ class Particula {
     comportamento() {
       if(Math.random()*10<=5) this.sprite.x += Math.random()*5;
       else this.sprite.y += Math.random()*5;
-      
       if(Math.random()*10<=5) this.sprite.x -= Math.random()*5;
       else this.sprite.y -= Math.random()*5;
     }
@@ -430,12 +409,9 @@ class Particula {
     desenhar(ctx) {
       if(this.sprite !== null) {
         ctx.drawImage(
-          this.sprite.imagem,
-          this.sprite.x,
-          this.sprite.y,
-          this.sprite.escalaX,
-          this.sprite.escalaY
-          )
+          this.sprite.imagem, this.sprite.x, this.sprite.y,
+          this.sprite.escalaX, this.sprite.escalaY
+        );
       }
       if(this.cor !== null) {
         ctx.fillStyle = this.cor;
@@ -451,26 +427,22 @@ class ArrastavelHtml {
         this.id = id;
         this.elemento = document.getElementById(id);
         this.coord = coord;
-        
         this.seMove = 2;
         if(this.coord==true) {
-        this.x = document.createElement('h1');
-        this.x.id = 'posX';
-        document.body.appendChild(this.x);
-        this.y = document.createElement('h1');
-        this.y.id = 'posY';
-        document.body.appendChild(this.y);
-        
-        this.x.style.position = 'absolute';
-        this.y.style.position = 'absolute';
-        this.x.style.transform = 'translate(100px, 100px)';
-        this.y.style.transform = 'translate(200px, 100px)';
+          this.x = document.createElement('h1');
+          this.x.id = 'posX';
+          document.body.appendChild(this.x);
+          this.y = document.createElement('h1');
+          this.y.id = 'posY';
+          document.body.appendChild(this.y);
+          this.x.style.position = 'absolute';
+          this.y.style.position = 'absolute';
+          this.x.style.transform = 'translate(100px, 100px)';
+          this.y.style.transform = 'translate(200px, 100px)';
         }
         this.tamanhoGrade = tamanhoGrade;
         this.arrastando = false;
-        
         this.elemento.style.position = 'absolute';
-        
         this.elemento.addEventListener('touchstart', (evento) => this.iniciarArrasto(evento));
         document.addEventListener('touchend', () => this.arrastando = false);
         document.addEventListener('touchmove', (evento) => this.arrastar(evento));
@@ -478,31 +450,26 @@ class ArrastavelHtml {
     
     iniciarArrasto(evento) {
         const toque = evento.touches[0];
-        
         this.posX = this.posX || this.elemento.offsetLeft;
         this.posY = this.posY || this.elemento.offsetTop;
-        
         this.deslocX = toque.clientX - this.posX
         if(this.seMove==1 || this.seMove==2) this.deslocY = toque.clientY - this.posY
-        
         this.arrastando = true;
     }
 
     arrastar(evento) {
         if(this.arrastando) {
             const toque = evento.touches[0];
-            
             this.posX = toque.clientX - this.deslocX;
             this.posY = toque.clientY - this.deslocY;
-            
             this.posX = Math.round(this.posX / this.tamanhoGrade) * this.tamanhoGrade;
             this.posY = Math.round(this.posY / this.tamanhoGrade) * this.tamanhoGrade;
 
             if(this.seMove==1 || this.seMove==3) this.elemento.style.left = this.posX+"px";
             if(this.seMove==2 || this.seMove==3) this.elemento.style.top = this.posY+"px";
             if(this.coord==true) {
-            this.x.textContent = "X: " + this.posX;
-            this.y.textContent = "Y: " + this.posY;
+              this.x.textContent = "X: " + this.posX;
+              this.y.textContent = "Y: " + this.posY;
             }
         }
     }
@@ -529,7 +496,7 @@ class Camera {
 class EditorMapas {
     constructor(tilesImgId="tiles", canvasId="telaJogo") {
         this.engine = new Engine(canvasId, false);
-        this.modo = "desenhar"; // "desenhar" ou "apagar"
+        this.modo = "desenhar";
         this.camadaAtual = 0;
         this.tileSelecionado = { x: 0, y: 0 };
         this.tamanhoTile = 16;
@@ -537,13 +504,14 @@ class EditorMapas {
         this.tilesetImg = document.getElementById("tiles");
         this.tilesetCanvas = document.createElement("canvas");
         this.tilesetCtx = this.tilesetCanvas.getContext("2d");
+        this.ativo = true;
         
-        this.inicializarTileset();
-        this.inicializarMapa(40, 30); // 40x30 tiles
-        this.atualizarListaCamadas();
+        this.iniciarTileset();
+        this.iniciarMapa(40, 30);
+        this.attListaCamadas();
       }
       
-      inicializarTileset() {
+      iniciarTileset() {
         if(!this.tilesetImg) return;
         this.tilesetImg.onload = () => {
           this.tilesetCanvas.width = this.tilesetImg.naturalWidth || this.tilesetImg.width;
@@ -556,11 +524,10 @@ class EditorMapas {
         }
       }
       
-      inicializarMapa(largura, altura) {
+      iniciarMapa(largura, altura) {
         for(let i = 0; i < this.engine.camadas.length; i++) {
           this.mapaTiles[i] = Array.from({ length: altura }, () => 
-            Array.from({ length: largura }, () => null)
-          );
+            Array.from({ length: largura }, () => null));
         }
       }
       
@@ -576,12 +543,12 @@ class EditorMapas {
         this.tileSelecionado = { x, y };
       }
       
-      colocarTile(e) {
-        if(this.modo != "desenhar") return;
+      addTile(e) {
+        if(this.modo != "desenhar" || !this.ativo) return;
         
-        const rect = this.engine.canvas.getBoundingClientRect();
-        const x = Math.floor((e.touches[0].clientX - rect.left) / this.tamanhoTile);
-        const y = Math.floor((e.touches[0].clientY - rect.top) / this.tamanhoTile);
+        const coords = this.engine.obterCoordGlobal(e);
+        const x = Math.floor(coords.x / this.tamanhoTile);
+        const y = Math.floor(coords.y / this.tamanhoTile);
         
         if(x < 0 || y < 0 || x >= this.mapaTiles[0][0].length || y >= this.mapaTiles[0].length) return;
         
@@ -590,8 +557,7 @@ class EditorMapas {
         
         const novoTile = this.engine.novoSprite(
           this.tilesetImg.src,
-          this.engine.camadas[this.camadaAtual]
-        );
+          this.engine.camadas[this.camadaAtual]);
         novoTile.x = x * this.tamanhoTile;
         novoTile.y = y * this.tamanhoTile;
         novoTile.escalaX = this.tamanhoTile;
@@ -608,12 +574,12 @@ class EditorMapas {
         this.engine.renderizar();
       }
       
-      tirarTile(e) {
-        if(this.modo != "apagar") return;
+      rmTile(e) {
+        if(this.modo != "apagar" || !this.ativo) return;
         
-        const rect = this.engine.canvas.getBoundingClientRect();
-        const x = Math.floor((e.touches[0].clientX - rect.left) / this.tamanhoTile);
-        const y = Math.floor((e.touches[0].clientY - rect.top) / this.tamanhoTile);
+        const coords = this.engine.obterCoordGlobal(e);
+        const x = Math.floor(coords.x / this.tamanhoTile);
+        const y = Math.floor(coords.y / this.tamanhoTile);
         
         if(x < 0 || y < 0 || x >= this.mapaTiles[0][0].length || y >= this.mapaTiles[0].length) return;
 
@@ -632,11 +598,11 @@ class EditorMapas {
         this.mapaTiles.push(Array.from({ length: altura }, () => 
           Array.from({ length: largura }, () => null)
         ));
-        this.atualizarListaCamadas();
+        this.attListaCamadas();
         return camada;
       }
       
-      removerCamada() {
+      rmCamada() {
         if(this.engine.camadas.length <= 1) {
           alert("Não é possível remover a última camada.");
           return;
@@ -649,16 +615,16 @@ class EditorMapas {
         
         if(this.camadaAtual >= this.engine.camadas.length) this.camadaAtual = this.engine.camadas.length - 1;
         
-        this.atualizarListaCamadas();
+        this.attListaCamadas();
         this.engine.renderizar();
       }
       
       selecionarCamada(indice) {
         this.camadaAtual = indice;
-        this.atualizarListaCamadas();
+        this.attListaCamadas();
       }
       
-      atualizarListaCamadas() {
+      attListaCamadas() {
         const lista = document.getElementById("listaCamadas");
         lista.innerHTML = "";
         
@@ -684,10 +650,8 @@ class EditorMapas {
               const tile = this.mapaTiles[c][y][x];
               if(tile) {
                 linha.push({
-                  sx: tile.sx,
-                  sy: tile.sy,
-                  sEX: tile.sEX,
-                  sEY: tile.sEY
+                  sx: tile.sx, sy: tile.sy,
+                  sEX: tile.sEX, sEY: tile.sEY
                 });
               } else linha.push(null);
             }
@@ -696,23 +660,18 @@ class EditorMapas {
           dadosMapa.camadas.push(camada);
         }
         document.getElementById("json").value = "mapa.json";
-        Android.arquivar("mapa.json", JSON.stringify(dadosMapa));
-        alert("Mapa salvo no campo JSON!");
+        return dadosMapa;
       }
       
-      carregarMapa() {
+      carregarMapa(jsonStr) {
         try {
-          const jsonStr = Android.ler(document.getElementById("json").value);
           if(!jsonStr) {
             alert("Nenhum JSON fornecido.");
             return;
           }
-          
           const dadosMapa = JSON.parse(jsonStr);
-          
           this.engine.limpar();
           this.mapaTiles = [];
-          
           this.tilesetImg.src = dadosMapa.tileset;
           this.tamanhoTile = dadosMapa.tamanhoTile || 16;
           
@@ -727,10 +686,7 @@ class EditorMapas {
               for(let x = 0; x < camadaDados[y].length; x++) {
                 const tileDados = camadaDados[y][x];
                 if(tileDados) {
-                  const tile = this.engine.novoSprite(
-                    this.tilesetImg.src,
-                    camada
-                  );
+                  const tile = this.engine.novoSprite(this.tilesetImg.src, camada);
                   tile.x = x * this.tamanhoTile;
                   tile.y = y * this.tamanhoTile;
                   tile.escalaX = this.tamanhoTile;
@@ -746,11 +702,114 @@ class EditorMapas {
             }
           }
           this.camadaAtual = 0;
-          this.atualizarListaCamadas();
+          this.attListaCamadas();
           this.engine.renderizar();
           alert("Mapa carregado com sucesso!");
         } catch(e) {
           alert("Erro ao carregar mapa: " + e.message);
         }
       }
+}
+
+class Zoom {
+    constructor(canvasId, escala=1) {
+        this.canvas = document.getElementById(canvasId);
+        if(this.canvas) {
+            this.ctx;
+            this.escala = escala;
+            this.escalaMin = 0.5;
+            this.escalaMax = 3;
+            this.panX = 0;
+            this.panY = 0;
+            this.arrastando = false;
+            this.ultimoToqueX = 0;
+            this.ultimoToqueY = 0;
+            this.distAnterior = 0;
+            this.ativo = true;
+            
+            this.canvas.addEventListener('touchstart', (e) => { if(this.ativo) this.aoIniciar(e); });
+            this.canvas.addEventListener('touchmove', (e) => { if(this.ativo) this.aoMover(e); });
+            this.canvas.addEventListener('touchend', () => { if(this.ativo) this.noFim(); });
+            this.canvas.addEventListener('touchcancel', () => { if(this.ativo) this.noFim(); });
+        }
+    }
+
+    aplicarTransformacao() {
+        if(!this.ctx) return;
+        this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+        this.ctx.translate(this.panX, this.panY);
+        this.ctx.scale(this.escala, this.escala);
+    }
+
+    aoIniciar(e) {
+        e.preventDefault();
+        const rect = this.canvas.getBoundingClientRect();
+        if(e.touches.length === 1) {
+            this.arrastando = true;
+            this.ultimoToqueX = e.touches[0].clientX - rect.left;
+            this.ultimoToqueY = e.touches[0].clientY - rect.top;
+        } else if(e.touches.length === 2) {
+            this.arrastando = false;
+            const toque1 = e.touches[0];
+            const toque2 = e.touches[1];
+            
+            const toque1X = toque1.clientX - rect.left;
+            const toque1Y = toque1.clientY - rect.top;
+            const toque2X = toque2.clientX - rect.left;
+            const toque2Y = toque2.clientY - rect.top;
+            
+            this.distAnterior = Math.hypot(toque2X - toque1X, toque2Y - toque1Y);
+            this.pontoCentralX = (toque1X + toque2X) / 2;
+            this.pontoCentralY = (toque1Y + toque2Y) / 2;
+        }
+    }
+
+    aoMover(e) {
+        e.preventDefault();
+        const rect = this.canvas.getBoundingClientRect();
+        if(this.arrastando && e.touches.length === 1) {
+            const toqueX = e.touches[0].clientX - rect.left;
+            const toqueY = e.touches[0].clientY - rect.top;
+            
+            this.panX += toqueX - this.ultimoToqueX;
+            this.panY += toqueY - this.ultimoToqueY;
+            
+            this.ultimoToqueX = toqueX;
+            this.ultimoToqueY = toqueY;
+        } else if(e.touches.length === 2) {
+            const toque1 = e.touches[0];
+            const toque2 = e.touches[1];
+            
+            const toque1X = toque1.clientX - rect.left;
+            const toque1Y = toque1.clientY - rect.top;
+            const toque2X = toque2.clientX - rect.left;
+            const toque2Y = toque2.clientY - rect.top;
+            
+            const distAtual = Math.hypot(toque2X - toque1X, toque2Y - toque1Y);
+            
+            if(this.distAnterior > 0) {
+                const fatorZoom = distAtual / this.distAnterior;
+                const novaEscala = this.escala * fatorZoom;
+
+                if(novaEscala >= this.escalaMin && novaEscala <= this.escalaMax) {
+                    this.panX -= this.pontoCentralX;
+                    this.panY -= this.pontoCentralY;
+                    
+                    this.panX *= fatorZoom;
+                    this.panY *= fatorZoom;
+
+                    this.panX += this.pontoCentralX;
+                    this.panY += this.pontoCentralY;
+
+                    this.escala = novaEscala;
+                }
+            }
+            this.distAnterior = distAtual;
+        }
+    }
+
+    noFim() {
+        this.arrastando = false;
+        this.distAnterior = 0;
+    }
 }
