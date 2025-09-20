@@ -4,7 +4,7 @@
   <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Eco-Engine</title>
+	<title>Eco-Engine - nucleo</title>
 	<script src="engine.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.3/ace.js"></script>
 <style>
@@ -109,17 +109,14 @@ const antigoConsoleLog = console.log;
 console.log = function() {
     antigoConsoleLog.apply(console, arguments);
     const msg = Array.from(arguments).map(arg => {
-        if(arg instanceof Error) {
-            return `Erro: ${arg.message}\nStack: ${arg.stack}`;
-        } else if(typeof arg === 'object' && arg !== null) {
+        if(arg instanceof Error) return `Erro: ${arg.message}\nStack: ${arg.stack}`;
+        else if(typeof arg === 'object' && arg !== null) {
             try {
                 return JSON.stringify(arg, null, 2);
             } catch(e) {
                 return String(arg);
             }
-        } else {
-            return String(arg);
-        }
+        } else return String(arg);
     });
     const div = document.getElementById("console");
     if(div) {
@@ -132,17 +129,14 @@ const antigoConsoleError = console.error;
 console.error = function() {
     antigoConsoleError.apply(console, arguments);
     const msg = Array.from(arguments).map(arg => {
-        if(arg instanceof Error) {
-            return `❌ ERRO: ${arg.message}\nStack: ${arg.stack}`;
-        } else if(typeof arg === 'object' && arg !== null) {
+        if(arg instanceof Error) return `❌ ERRO: ${arg.message}\nStack: ${arg.stack}`;
+        else if(typeof arg === 'object' && arg !== null) {
             try {
                 return `❌ ${JSON.stringify(arg, null, 2)}`;
             } catch(e) {
                 return `❌ ${String(arg)}`;
             }
-        } else {
-            return `❌ ${String(arg)}`;
-        }
+        } else return `❌ ${String(arg)}`;
     });
     const div = document.getElementById("console");
     if(div) {
@@ -161,9 +155,7 @@ console.warn = function() {
             } catch(e) {
                 return `⚠️ ${String(arg)}`;
             }
-        } else {
-            return `⚠️ ${String(arg)}`;
-        }
+        } else return `⚠️ ${String(arg)}`;
     });
     const div = document.getElementById("console");
     if(div) {
@@ -177,7 +169,7 @@ const engine = new Engine("telaJogo", true, false);
 const editor = ace.edit("editorCodigo");
 editor.setTheme("ace/theme/monokai");
 editor.session.setMode("ace/mode/javascript");
-console.log("~ $ console...");
+console.log("console...");
 
 function trocarPagina(id) {
   const paginas = document.querySelectorAll(".pagina");
@@ -190,7 +182,7 @@ function trocarPaginaB() {
   const lista = ["jogo", "editor", "console", "editorTiles"];
   const atual = document.getElementById("listaPaginas").value;
   let indice = lista.indexOf(atual);
-  if (indice > 0) indice--;
+  if(indice > 0) indice--;
   trocarPagina(lista[indice]);
   document.getElementById("listaPaginas").value = lista[indice];
 }
@@ -199,7 +191,7 @@ function trocarPaginaP() {
   const lista = ["jogo", "editor", "console", "editorTiles"];
   const atual = document.getElementById("listaPaginas").value;
   let indice = lista.indexOf(atual);
-  if (indice < lista.length - 1) indice++;
+  if(indice < lista.length - 1) indice++;
   trocarPagina(lista[indice]);
   document.getElementById("listaPaginas").value = lista[indice];
 }

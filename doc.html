@@ -70,9 +70,7 @@
             margin: 15px 0 10px;
         }
         
-        p {
-            margin-bottom: 15px;
-        }
+        p { margin-bottom: 15px; }
         
         .recursos {
             display: grid;
@@ -107,21 +105,12 @@
             font-family: 'Courier New', monospace;
         }
         
-        .codigo-comentario {
-            color: #6a9955;
-        }
-        
-        .codigo-chave {
-            color: #569cd6;
-        }
-        
-        .codigo-func {
-            color: #dcdcaa;
-        }
-        
-        .codigo-string {
-            color: #ce9178;
-        }
+        .codigo-comentario { color: #6a9955; }
+        .codigo-chave { color: #569cd6; }
+        .codigo-api { color: #6DF7B1FF; }
+        .codigo-func { color: #dcdcaa; }
+        .codigo-num { color: #FF22A9FF; }
+        .codigo-string { color: #ce9178; }
         
         .bt {
             display: inline-block;
@@ -135,21 +124,12 @@
             transition: background 0.3s ease;
         }
         
-        .bt:hover {
-            background: #3d8b40;
-        }
-        
-        .bt-segundario {
-            background: #2c5364;
-        }
-        
-        .bt-segundario:hover {
-            background: #203a43;
-        }
-        
-        .status-lista {
-            list-style-type: none;
-        }
+        .bt:hover { background: #3d8b40; }
+        .bt-youtube { background: #BF0000FF; }
+        .bt-youtube:hover { background: red; }
+        .bt-segundario { background: #2c5364; }
+        .bt-segundario:hover { background: #203a43; }
+        .status-lista { list-style-type: none; }
         
         .status-lista li {
             padding: 8px 0;
@@ -161,13 +141,8 @@
             margin-right: 10px;
         }
         
-        .status-lista li.em-progresso:before {
-            content: "🟡 ";
-        }
-        
-        .status-lista li.pendente:before {
-            content: "🔴 ";
-        }
+        .status-lista li.em-progresso:before { content: "🟡 "; }
+        .status-lista li.pendente:before { content: "🔴 "; }
         
         footer {
             text-align: center;
@@ -177,13 +152,9 @@
         }
         
         @media (max-width: 768px) {
-            .recursos {
-                grid-template-columns: 1fr;
-            }
+            .recursos { grid-template-columns: 1fr; }
             
-            h1 {
-                font-size: 2.2rem;
-            }
+            h1 { font-size: 2.2rem; }
         }
     </style>
 </head>
@@ -224,16 +195,22 @@
             <h2>API Java</h2>
             <p>A API Java da game engine possui métodos essenciais para recursos geralmente utilizados:</p>
             <div class="codigo-texto">
-                <span class="codigo-comentario">// Armazenar dados em arquivo</span><br>
+                <span class="codigo-comentario">// retorna verdadeiro se o arquivo existir</span><br>
+                <span class="codigo-chave">let</span> seExiste = <span class="codigo-func">Android</span>.arquivoExiste(<span class="codigo-string">"caminho/arquivo.txt"</span>);<br><br>
+                <span class="codigo-comentario">// retorna verdadeiro se o caminho for uma pasta</span><br>
+                <span class="codigo-chave">let</span> ehDiretorio = <span class="codigo-func">Android</span>.ehDir(<span class="codigo-string">"caminho/pasta"</span>);<br><br>
+                <span class="codigo-comentario">// listar todos os arquivos do caminho</span><br>
+                <span class="codigo-chave">const</span> array = <span class="codigo-func">Android</span>.listarArquivos(<span class="codigo-string">"caminho/arquivos/"</span>);<br><br>
+                <span class="codigo-comentario">// armazenar dados em arquivo</span><br>
                 <span class="codigo-func">Android</span>.arquivar(<span class="codigo-string">"caminho.txt"</span>, conteudoString);<br><br>
                 
-                <span class="codigo-comentario">// Ler conteúdo de arquivo</span><br>
+                <span class="codigo-comentario">// ler conteúdo de arquivo</span><br>
                 <span class="codigo-chave">const</span> conteudo = <span class="codigo-func">Android</span>.ler(<span class="codigo-string">"caminho.txt"</span>); <span class="codigo-comentario">// retorna o conteúdo em string</span><br><br>
                 
-                <span class="codigo-comentario">// Excluir arquivo</span><br>
+                <span class="codigo-comentario">// excluir arquivo</span><br>
                 <span class="codigo-func">Android</span>.deletar(<span class="codigo-string">"caminho.txt"</span>);<br><br>
                 
-                <span class="codigo-comentario">// Exibir mensagem</span><br>
+                <span class="codigo-comentario">// exibir mensagem</span><br>
                 <span class="codigo-func">Android</span>.msg(<span class="codigo-string">"mensagem"</span>); <span class="codigo-comentario">// exibe com Toast.makeText(...).show()</span>
             </div>
             <p>Essas funcionalidades estão limitadas ao escopo do projeto, sem acessos totais ao armazenamento externo para segurança.</p>
@@ -241,40 +218,80 @@
         <div class="sessao">
             <h2>Status do Desenvolvimento</h2>
             <ul class="status-lista">
-                <li class="em-progresso">Aprimorar interface</li>
+                <li class="em-progresso">Interface</li>
                 <li>Sistema de navegação em páginas</li>
-                <li class="em-progresso">Finalizar o editor de mapas padrão</li>
+                <li class="em-progresso">Editor de mapas padrão</li>
                 <li class="pendente">Complementar a API Java</li>
-                <li class="pendente">Fazer documentação da engine</li>
-                <li class="pendente">Mais configurações visuais</li>
+                <li class="pendente">Configurações visuais</li>
                 <li class="pendente">Geração de APK</li>
                 <li>Console</li>
-                <li>Controles de navegação entre páginas</li>
+                <li>Botões de navegação entre páginas</li>
             </ul>
         </div>
         <div class="sessao">
             <h2>Como Começar</h2>
             <p>Para testar a versão mais atual da Eco-Engine, compile o APK diretamente do repositório GitHub.</p>
             <a href="#" class="bt">Download da Beta (indisponivel)</a>
-            <a href="https://youtube.com/@shiniga-op?si=sQO5Te6qp2Z2kQer" class="bt bt-segundario">Youtube</a>
+            <a href="https://youtube.com/@shiniga-op?si=sQO5Te6qp2Z2kQer" class="bt bt-youtube">Youtube</a>
             <a href="https://github.com/Shiniga-OP/Eco-Engine" class="bt bt-segundario">Repositório GitHub</a>
         </div>
         <div class="sessao">
-            <h2>Exemplo de Código</h2>
-            <p>Aqui está um exemplo simples de como criar um jogo básico com a Eco-Engine:</p>
+            <!-- objeto basico -->
+            <h2>Sobre Objetos basicos.</h2>
+            <p>Um exemplo simples de como criar um jogo básico com a Eco-Engine:</p>
             
             <div class="codigo-texto">
-                <span class="codigo-comentario">// Como criar um objeto:</span><br>
                 <span class="codigo-chave">const</span> player = {<br>
-                &nbsp;&nbsp;x: 400,<br>
-                &nbsp;&nbsp;y: 225,<br>
-                &nbsp;&nbsp;escalaX: 40,<br>
-                &nbsp;&nbsp;escalaY: 40,<br>
+                &nbsp;&nbsp;x: <span class="codigo-num">400</span>,<br>
+                &nbsp;&nbsp;y: <span class="codigo-num">225</span>,<br>
+                &nbsp;&nbsp;escalaX: <span class="codigo-num">40</span>,<br>
+                &nbsp;&nbsp;escalaY: <span class="codigo-num">40</span>,<br>
                 &nbsp;&nbsp;cor: <span class="codigo-string">"red"</span><br>
                 };<br><br>
                 
-                <span class="codigo-comentario">// Para adicionar na renderização:</span><br>
+                <span class="codigo-comentario">// para adicionar na renderização:</span><br>
                 engine.<span class="codigo-func">add</span>(player);
+            </div>
+            <!-- sprite basico -->
+            <h2>Como criar um objeto sprite.</h2>
+            <p>Você pode criar objetos sprite de duas formas.</p>
+            <p>Primeiro e mais facíl:</p>
+            <div class="codigo-texto">
+                <span class="codigo-chave">const</span> player = engine.<span class="codigo-func">novoSprite</span>(<span class="codigo-string">"sprites/terra.png"</span>); <span class="codigo-comentario">// isto cria um sprite e adiciona para rendedização</span>
+            </div>
+            <p>E segundo, mais detalhado:</p>
+            <div class="codigo-texto">
+                <span class="codigo-chave">const</span> player = <span class="codigo-chave">new</span><span class="codigo-comentario"> Sprite</span>(<br>
+                &nbsp;&nbsp;<span class="codigo-string">"sprites/terra.png"</span>,<span class="codigo-comentario"> // caminho do sprite</span><br>
+                &nbsp;&nbsp;<span class="codigo-num">100</span>,<span class="codigo-comentario"> // posição X do sprite (opcional)</span><br>
+                &nbsp;&nbsp;<span class="codigo-num">100</span>,<span class="codigo-comentario"> // posição Y do sprite (opcional)</span><br>
+                &nbsp;&nbsp;<span class="codigo-num">60</span>,<span class="codigo-comentario"> // largura do sprite (opcional)</span><br>
+                &nbsp;&nbsp;<span class="codigo-num">60</span>,<span class="codigo-comentario"> // altura do sprite (opcional)</span><br>);<br>
+                engine.<span class="codigo-func">add</span>(player);
+            </div>
+            <!-- botões -->
+            <h2>Sobre Botões.</h2>
+            <p>Os botões funcionam como as sprites, porém com métodos a mais.</p>
+            <div class="codigo-texto">
+                <span class="codigo-chave">const</span> botao = {<br>
+                &nbsp;&nbsp;x: <span class="codigo-num">0</span>, y: <span class="codigo-num">0</span>,<br>
+                &nbsp;&nbsp;escalaX: <span class="codigo-num">60</span>, escalaY: <span class="codigo-num">60</span>,<br>
+                &nbsp;&nbsp;cor: <span class="codigo-string">"blue"</span>,<br>
+                &nbsp;&nbsp;click: () <span class="codigo-chave">=></span> <span class="codigo-api">console</span>.<span class="codigo-func">log</span>(<span class="codigo-string">"clicado"</span>);<br>
+                &nbsp;&nbsp;pressionado: () <span class="codigo-chave">=></span> player.x += <span class="codigo-num">1</span>,<br>
+                &nbsp;&nbsp;noFim: () <span class="codigo-chave">=></span> {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="codigo-api">console</span>.<span class="codigo-func">log</span>(<span class="codigo-string">"o botão deixou de ser pressionado"</span>);<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;player.x = <span class="codigo-num">0</span>;<br>
+                &nbsp;&nbsp;}<br>
+                };<br>
+                engine.<span class="codigo-func">addBotao</span>(botao);
+            </div>
+            <p>"engine.addBotao(...);" também adiciona o botão para renderização automatica. Você pode utilizar esse sistema para sprites também. Lembre-se de adicionar o método ANTES de utilizar "engine.addBotao(...);".</p><br>
+            <p>Exemplo:</p>
+            <div class="codigo-texto">
+                <span class="codigo-comentario">// botao criado com new Sprite(...);</span><br>
+                botao.pressionado = () <span class="codigo-chave">=></span> player.x += <span class="codigo-num">1</span>;<br>
+                engine.<span class="codigo-func">addBotao</span>(botao);
             </div>
         </div>
         <footer>

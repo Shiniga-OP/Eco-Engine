@@ -84,7 +84,7 @@
     <label>Caminho do Mapa JSON:</label>
     <input type="text" id="json" class="tiles">
     <label>Camada:</label>
-    <input type="number" id="camadaEntrada" class="tiles" value="0" min="0" max="10">
+    <input type="number" id="camadaEntrada" class="tiles" value="0" min="0">
   </div>
   <!-- controles de camada -->
   <div id="camadaControles">
@@ -101,26 +101,23 @@
           if(editor.modo == "desenhar") editor.addTile(e);
           else if(editor.modo == "apagar") editor.rmTile(e);
         });
-        
         editor.engine.canvas.addEventListener("touchmove", (e) => {
           if(editor.modo == "desenhar") editor.addTile(e);
           else if(editor.modo == "apagar") editor.rmTile(e);
         });
-        
         document.getElementById("novaCamada").addEventListener("click", () => editor.novaCamada());
         
         document.getElementById("removerCamada").addEventListener("click", () => editor.rmCamada());
         
         document.getElementById("salvarTile").addEventListener("click", () => {
           Android.arquivar("mapa.json", JSON.stringify(editor.salvarMapa()));
-          alert("Mapa salvo no campo JSON!");
+          alert("Mapa salvo");
         });
-        
         document.getElementById("carregarTile").addEventListener("click", () => {
             editor.carregarMapa(Android.ler(document.getElementById("json").value));
             editor.attListaCamadas();
+            alert("Mapa carregado");
         });
-        
         document.getElementById("imgTileset").addEventListener("change", (e) => {
           const arquivo = e.target.files[0];
           if(arquivo) {

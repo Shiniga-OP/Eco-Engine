@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eco-Engine</title>
+    <script src="engine.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.3/ace.js"></script>
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        background: #111;
+        color: #0f0;
+        font-family: monospace;
+        overflow: hidden;
+      }
+      #barraFerramentas, #projetos {
+        border: 1px solid #444;
+        display: flex;
+        padding: 5px;
+      }
+      #projetos {
+        width: 530px;
+        height: 750px;
+        display: block;
+        margin: auto;
+        position: absolute;
+        left: 0; 
+        right: 0;
+        top: 50px;
+      }
+      #barraFerramentas select, #barraFerramentas input, #barraFerramentas button {
+        margin-right: 5px;
+        background: #111;
+        border: 1px solid #444;
+        color: #0f0;
+        padding: 5px;
+        cursor: pointer;
+      }
+      #barraFerramentas input { 
+        width: 120px; 
+      }
+      #novoTela {
+        position: absolute;
+        background: #222;
+        display: none;
+        margin: auto;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        padding: 20px;
+        border: 1px solid #0f0;
+        z-index: 100;
+      }
+      #novoTela div {
+        margin-bottom: 15px;
+      }
+      #novoTela input {
+        background: #111;
+        border: 1px solid #444;
+        color: #0f0;
+        padding: 5px;
+        width: 200px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="barraFerramentas">
+      <button onclick="criarNovo()">Novo projeto</button>
+    </div>
+    <div id="projetos"></div>
+    <div id="novoTela">
+      <div>
+        <h3>Nome do projeto</h3>
+        <p>Versão da engine: 0.0.1</p>
+        <input type="text" placeholder="nome do projeto" id="nomeProjeto">
+      </div>
+      <button onclick="confirmarNovo()">Ok</button>
+      <button onclick="cancelarNovo()">Cancelar</button>
+      <button onclick="atualizar()">Atualizar</button>
+    </div>
+    <script>
+      function criarNovo() {
+        document.getElementById("novoTela").style.display = "block";
+      }
+      
+      function confirmarNovo() {
+        const nome = document.getElementById("nomeProjeto").value;
+        Android.criarProjeto(nome);
+        document.getElementById("novoTela").style.display = "none";
+        cancelarNovo();
+        atualizar();
+        abrirProjeto(nome);
+      }
+      
+      function cancelarNovo() {
+        document.getElementById("nomeProjeto").value = "";
+        document.getElementById("novoTela").style.display = "none";
+      }
+      
+      function atualizar() {
+        try {
+            const arquivos = Android.listarArquivos("");
+            const divProjetos = document.getElementById("projetos");
+            divProjetos.innerHTML = "<h3>Projetos:</h3>";
+            
+            const listaArquivos = JSON.parse(arquivos.replace("[", "[\"").replace("]", "\"]").replace(/, /g, "\",\""));
+            
+            listaArquivos.forEach(arquivo => {
+              const projeto = document.createElement("div");
+              projeto.textContent = arquivo;
+              projeto.style.cursor = "pointer";
+              projeto.style.margin = "5px";
+              projeto.onclick = function() {
+                abrirProjeto(arquivo);
+              };
+              divProjetos.appendChild(projeto);
+            });
+        } catch(e) {
+          alert("Erro ao carregar projetos:", e);
+          document.getElementById("projetos").innerHTML = "Erro ao carregar projetos";
+        }
+      }
+      
+      function abrirProjeto(nomeProjeto) {
+        window.location.href = nomeProjeto+"/index.html";
+      }
+      atualizar();
+    </script>
+  </body>
+</html>

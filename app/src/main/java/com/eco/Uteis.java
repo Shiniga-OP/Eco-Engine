@@ -69,16 +69,13 @@ class Adapter extends ArrayAdapter<String> {
 }
 
 class ArquivosUtil {
-
     public static void criarArquivo(String caminho) {
         int ultimoPasso = caminho.lastIndexOf(File.separator);
         if(ultimoPasso > 0) {
             String dirCaminho = caminho.substring(0, ultimoPasso);
             criarDir(dirCaminho);
         }
-
         File arquivo = new File(caminho);
-
         try {
             if(!arquivo.exists()) arquivo.createNewFile();
         } catch(IOException e) {
@@ -145,15 +142,12 @@ class ArquivosUtil {
 					pastaDestino.mkdirs();
 				}
 
-				for (String arquivo : arquivos) {
+				for(String arquivo : arquivos) {
 					String novoCaminhoAssets = caminhoAssets + "/" + arquivo;
 					String novoCaminhoDestino = caminhoDestino + "/" + arquivo;
 
-					if(contexto.getAssets().list(novoCaminhoAssets).length > 0) {
-						copiarPastaAssets(contexto, novoCaminhoDestino, novoCaminhoAssets);
-					} else {
-						copiarArquivoAssets(contexto, novoCaminhoDestino, novoCaminhoAssets);
-					}
+					if(contexto.getAssets().list(novoCaminhoAssets).length > 0) copiarPastaAssets(contexto, novoCaminhoDestino, novoCaminhoAssets);
+					else copiarArquivoAssets(contexto, novoCaminhoDestino, novoCaminhoAssets);
 				}
 			}
 		} catch (IOException e) {
@@ -168,7 +162,7 @@ class ArquivosUtil {
 		return pastaAntiga.exists() && pastaAntiga.isDirectory() && pastaAntiga.renameTo(pastaNova);
 	}
 
-	private static void copiarArquivoAssets(Context contexto, String caminhoDestino, String caminhoAssets) {
+	public static void copiarArquivoAssets(Context contexto, String caminhoDestino, String caminhoAssets) {
 		try {
 			InputStream is = contexto.getAssets().open(caminhoAssets);
 			FileOutputStream fos = new FileOutputStream(new File(caminhoDestino));

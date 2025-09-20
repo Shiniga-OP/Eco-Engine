@@ -18,17 +18,17 @@ Android.msg("mensagem"); // exibe com Toast.makeText(...).show();
 essas funcionalidades estão limitadas ao escopo do projeto, sem acessos totais ao armazenamento externo para segurança.
 
 ## lista de recursos:
-1. [ ] interface. (76%)
-2. [x] sistema de navegação em paginas.
-3. [ ] finalizar o editor de mapas padrão. (89%)
-4. [ ] complementar a API Java. (60%)
-5. [x] fazer documentação da engine. (11%)
-6. [ ] mais configurações visuais.
+1. [x] interface. (90%)
+2. [x] sistema de navegação em paginas. (99%)
+3. [x] finalizar o editor de mapas padrão. (92%)
+4. [x] complementar a API Java. (74%)
+5. [x] fazer documentação da engine. (21%)
+6. [x] mais configurações visuais. (26%)
 7. [ ] geração de APK.
-8. [x] console.
-9. [x] controles de navegação entre paginas.
+8. [x] console. (%95)
+9. [x] controles de navegação entre paginas. (%100);
 10. [ ] aprimorar sistema de camêra.
-11. [ ] sistema de atributos nos mapas.
+11. [ ] aprimorar sistema de zoom.
 
 ## aviso:
 a releasse é uma versão extremamente antiga da engine, a game engine atualizada ainda está em desenvolvimento. sem previsão de lançamento ainda. Para testar a versão mais atual, compile o APK do repositório.
