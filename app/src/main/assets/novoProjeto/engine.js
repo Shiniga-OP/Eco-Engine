@@ -88,24 +88,21 @@ class Engine {
     for(const camada of this.camadas) {
       for(const sprite of camada) {
         try {
-          if(sprite.sx != null) {
+          if(sprite.sx != null  && sprite.imagem.complete) {
               this.ctx.drawImage(
                 sprite.imagem,
                 sprite.sx, sprite.sy, sprite.sEX, sprite.sEY,
-                sprite.x, sprite.y, sprite.escalaX, sprite.escalaY
-              );
+                sprite.x, sprite.y, sprite.escalaX, sprite.escalaY);
             } else if(sprite.imagem != null && sprite.imagem.complete) {
               this.ctx.drawImage(
                 sprite.imagem,
                 sprite.x, sprite.y,
-                sprite.escalaX, sprite.escalaY
-            );
+                sprite.escalaX, sprite.escalaY);
             } else if(sprite.cor != null && sprite.texto == null) {
               this.ctx.fillStyle = sprite.cor;
               this.ctx.fillRect(
                 sprite.x, sprite.y,
-                sprite.escalaX, sprite.escalaY
-              );
+                sprite.escalaX, sprite.escalaY);
             } else if(sprite.texto) {
               if(sprite.texto.includes("\n")) {
                 const array = sprite.texto.split("\n");
@@ -115,8 +112,7 @@ class Engine {
                   this.ctx.fillText(
                     array[i],
                     sprite.x, sprite.y+i*parseInt(sprite.escala, 10),
-                    sprite.escalaX, sprite.escalaY
-                  );
+                    sprite.escalaX, sprite.escalaY);
                 }
               } else {
                 this.ctx.fillStyle = sprite.cor;
@@ -124,8 +120,7 @@ class Engine {
                 this.ctx.fillText(
                   sprite.texto,
                   sprite.x, sprite.y,
-                  sprite.escalaX, sprite.escalaY
-                );
+                  sprite.escalaX, sprite.escalaY);
               }
             } else if(sprite instanceof Particula) {
               sprite.desenhar(this.ctx);
@@ -135,6 +130,7 @@ class Engine {
           if(err instanceof DOMException) {
             alert("Erro DOMException ao desenhar sprite (ver console).");
             console.error("DOMException ao desenhar sprite:", sprite, err);
+            console.error("sprite: ", sprite.imagem.src);
             throw err;
           } else throw err;
         }
@@ -495,20 +491,21 @@ class Camera {
 
 class EditorMapas {
     constructor(tilesImgId="tiles", canvasId="telaJogo") {
-        this.engine = new Engine(canvasId, false);
+        if(canvasId instanceof Engine) this.engine = canvasId
+        else this.engine = new Engine(canvasId, false);
         this.modo = "desenhar";
         this.camadaAtual = 0;
         this.tileSelecionado = { x: 0, y: 0 };
         this.tamanhoTile = 16;
         this.mapaTiles = [];
-        this.tilesetImg = document.getElementById("tiles");
+        if(tilesImgId instanceof Image) this.tilesetImg = tilesImgId;
+        else this.tilesetImg = document.getElementById("tiles");
         this.tilesetCanvas = document.createElement("canvas");
         this.tilesetCtx = this.tilesetCanvas.getContext("2d");
         this.ativo = true;
         
         this.iniciarTileset();
         this.iniciarMapa(40, 30);
-        this.attListaCamadas();
       }
       
       iniciarTileset() {
@@ -659,11 +656,10 @@ class EditorMapas {
           }
           dadosMapa.camadas.push(camada);
         }
-        document.getElementById("json").value = "mapa.json";
         return dadosMapa;
       }
       
-      carregarMapa(jsonStr) {
+      carregarMapa(jsonStr, tileset=this.tilesetImg) {
         try {
           if(!jsonStr) {
             alert("Nenhum JSON fornecido.");
@@ -672,7 +668,7 @@ class EditorMapas {
           const dadosMapa = JSON.parse(jsonStr);
           this.engine.limpar();
           this.mapaTiles = [];
-          this.tilesetImg.src = dadosMapa.tileset;
+          tileset.src = dadosMapa.tileset;
           this.tamanhoTile = dadosMapa.tamanhoTile || 16;
           
           for(let c = 0; c < dadosMapa.camadas.length; c++) {
@@ -686,12 +682,12 @@ class EditorMapas {
               for(let x = 0; x < camadaDados[y].length; x++) {
                 const tileDados = camadaDados[y][x];
                 if(tileDados) {
-                  const tile = this.engine.novoSprite(this.tilesetImg.src, camada);
+                  const tile = this.engine.novoSprite(tileset.src, camada);
                   tile.x = x * this.tamanhoTile;
                   tile.y = y * this.tamanhoTile;
                   tile.escalaX = this.tamanhoTile;
                   tile.escalaY = this.tamanhoTile;
-                  tile.imagem = this.tilesetImg;
+                  tile.imagem = tileset;
                   tile.sx = tileDados.sx;
                   tile.sy = tileDados.sy;
                   tile.sEX = tileDados.sEX;
@@ -702,10 +698,9 @@ class EditorMapas {
             }
           }
           this.camadaAtual = 0;
-          this.attListaCamadas();
           this.engine.renderizar();
-          alert("Mapa carregado com sucesso!");
         } catch(e) {
+          console.error("Erro ao carregar mapa: " + e.message);
           alert("Erro ao carregar mapa: " + e.message);
         }
       }

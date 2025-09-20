@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eco-Engine - Documentação</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            color: #f0f6fc;
+            line-height: 1.6;
+        }
+        
+        .grupo {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            padding: 40px 0;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            color: #4caf50;
+            text-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+        }
+        
+        .linha-marcada {
+            font-size: 1.2rem;
+            color: #a8dadc;
+            margin-bottom: 20px;
+        }
+        
+        .logo {
+            font-size: 5rem;
+            margin-bottom: 20px;
+        }
+        
+        .sessao {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        h2 {
+            color: #4caf50;
+            margin-bottom: 15px;
+            border-bottom: 1px solid rgba(76, 175, 80, 0.3);
+            padding-bottom: 10px;
+        }
+        
+        h3 {
+            color: #a8dadc;
+            margin: 15px 0 10px;
+        }
+        
+        p {
+            margin-bottom: 15px;
+        }
+        
+        .recursos {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .recurso-div {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            border-radius: 8px;
+            transition: transform 0.3s ease;
+        }
+        
+        .recurso-div:hover {
+            transform: translateY(-5px);
+        }
+        
+        .recurso-icone {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            color: #4caf50;
+        }
+        
+        .codigo-texto {
+            background: #1e1e1e;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .codigo-comentario {
+            color: #6a9955;
+        }
+        
+        .codigo-chave {
+            color: #569cd6;
+        }
+        
+        .codigo-func {
+            color: #dcdcaa;
+        }
+        
+        .codigo-string {
+            color: #ce9178;
+        }
+        
+        .bt {
+            display: inline-block;
+            background: #4caf50;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: bold;
+            margin: 10px 5px;
+            transition: background 0.3s ease;
+        }
+        
+        .bt:hover {
+            background: #3d8b40;
+        }
+        
+        .bt-segundario {
+            background: #2c5364;
+        }
+        
+        .bt-segundario:hover {
+            background: #203a43;
+        }
+        
+        .status-lista {
+            list-style-type: none;
+        }
+        
+        .status-lista li {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .status-lista li:before {
+            content: "🟢 ";
+            margin-right: 10px;
+        }
+        
+        .status-lista li.em-progresso:before {
+            content: "🟡 ";
+        }
+        
+        .status-lista li.pendente:before {
+            content: "🔴 ";
+        }
+        
+        footer {
+            text-align: center;
+            padding: 30px 0;
+            margin-top: 40px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        @media (max-width: 768px) {
+            .recursos {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="grupo">
+        <header>
+            <div class="logo">🕹️</div>
+            <h1>Eco-Engine</h1>
+            <p class="linha-marcada">Game Engine Mobile para criação de jogos 2D em JavaScript</p>
+            <p>Desenvolvida por Shiniga-OP</p>
+        </header>
+        <div class="sessao">
+            <h2>Sobre a Eco-Engine</h2>
+            <p>A Eco-Engine é uma game engine mobile focada na criação de jogos 2D com canvas em JavaScript. Seu sistema personalizado foi feito especificamente para a interface de celulares em posição horizontal.</p>
+            <p>Diferente de outras engines, o código da Eco-Engine é totalmente exposto para o usuário, podendo ser modificado livremente. A interface HTML e o funcionamento em WebView permitem que a adição de ferramentas, personalização e estilização sejam feitas de forma adaptável a qualquer preferência.</p>
+        </div>
+        <div class="sessao">
+            <h2>Recursos Principais</h2>
+            <div class="recursos">
+                <div class="recurso-div">
+                    <div class="recurso-icone">🎮</div>
+                    <h3>Canvas 2D</h3>
+                    <p>Renderização usando canvas HTML5 para jogos 2D.</p>
+                </div>
+                <div class="recurso-div">
+                    <div class="recurso-icone">️✏️</div>
+                    <h3>Editor de Mapas</h3>
+                    <p>Crie mapas com tilesets proprios e camadas, com o editor de mapas pdrão da engine você pode criar sem a necessessidade de sair do aplicativo. mapas salvos e carregados em JSON.</p>
+                </div>
+                <div class="recurso-div">
+                    <div class="recurso-icone">⚙️</div>
+                    <h3>API Java</h3>
+                    <p>Métodos essenciais para operações de arquivos e interface com o sistema Android.</p>
+                </div>
+            </div>
+        </div>
+        <div class="sessao">
+            <h2>API Java</h2>
+            <p>A API Java da game engine possui métodos essenciais para recursos geralmente utilizados:</p>
+            <div class="codigo-texto">
+                <span class="codigo-comentario">// Armazenar dados em arquivo</span><br>
+                <span class="codigo-func">Android</span>.arquivar(<span class="codigo-string">"caminho.txt"</span>, conteudoString);<br><br>
+                
+                <span class="codigo-comentario">// Ler conteúdo de arquivo</span><br>
+                <span class="codigo-chave">const</span> conteudo = <span class="codigo-func">Android</span>.ler(<span class="codigo-string">"caminho.txt"</span>); <span class="codigo-comentario">// retorna o conteúdo em string</span><br><br>
+                
+                <span class="codigo-comentario">// Excluir arquivo</span><br>
+                <span class="codigo-func">Android</span>.deletar(<span class="codigo-string">"caminho.txt"</span>);<br><br>
+                
+                <span class="codigo-comentario">// Exibir mensagem</span><br>
+                <span class="codigo-func">Android</span>.msg(<span class="codigo-string">"mensagem"</span>); <span class="codigo-comentario">// exibe com Toast.makeText(...).show()</span>
+            </div>
+            <p>Essas funcionalidades estão limitadas ao escopo do projeto, sem acessos totais ao armazenamento externo para segurança.</p>
+        </div>
+        <div class="sessao">
+            <h2>Status do Desenvolvimento</h2>
+            <ul class="status-lista">
+                <li class="em-progresso">Aprimorar interface</li>
+                <li>Sistema de navegação em páginas</li>
+                <li class="em-progresso">Finalizar o editor de mapas padrão</li>
+                <li class="pendente">Complementar a API Java</li>
+                <li class="pendente">Fazer documentação da engine</li>
+                <li class="pendente">Mais configurações visuais</li>
+                <li class="pendente">Geração de APK</li>
+                <li>Console</li>
+                <li>Controles de navegação entre páginas</li>
+            </ul>
+        </div>
+        <div class="sessao">
+            <h2>Como Começar</h2>
+            <p>Para testar a versão mais atual da Eco-Engine, compile o APK diretamente do repositório GitHub.</p>
+            <a href="#" class="bt">Download da Beta (indisponivel)</a>
+            <a href="https://youtube.com/@shiniga-op?si=sQO5Te6qp2Z2kQer" class="bt bt-segundario">Youtube</a>
+            <a href="https://github.com/Shiniga-OP/Eco-Engine" class="bt bt-segundario">Repositório GitHub</a>
+        </div>
+        <div class="sessao">
+            <h2>Exemplo de Código</h2>
+            <p>Aqui está um exemplo simples de como criar um jogo básico com a Eco-Engine:</p>
+            
+            <div class="codigo-texto">
+                <span class="codigo-comentario">// Como criar um objeto:</span><br>
+                <span class="codigo-chave">const</span> player = {<br>
+                &nbsp;&nbsp;x: 400,<br>
+                &nbsp;&nbsp;y: 225,<br>
+                &nbsp;&nbsp;escalaX: 40,<br>
+                &nbsp;&nbsp;escalaY: 40,<br>
+                &nbsp;&nbsp;cor: <span class="codigo-string">"red"</span><br>
+                };<br><br>
+                
+                <span class="codigo-comentario">// Para adicionar na renderização:</span><br>
+                engine.<span class="codigo-func">add</span>(player);
+            </div>
+        </div>
+        <footer>
+            <p>Eco-Engine &copy; 2025 - Desenvolvido por Shiniga-OP</p>
+            <p>JavaScript • HTML • Java</p>
+        </footer>
+    </div>
+</body>
+</html>

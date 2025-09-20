@@ -95,6 +95,7 @@
   </div>
   <script>
     const editor = new EditorMapas("tiles", "telaJogo");
+    editor.attListaCamadas();
     editor.tilesetImg.addEventListener("touchstart", (e) => editor.selecionarTile(e));
         editor.engine.canvas.addEventListener("touchstart", (e) => {
           if(editor.modo == "desenhar") editor.addTile(e);
@@ -115,7 +116,10 @@
           alert("Mapa salvo no campo JSON!");
         });
         
-        document.getElementById("carregarTile").addEventListener("click", () => editor.carregarMapa(Android.ler(document.getElementById("json").value)));
+        document.getElementById("carregarTile").addEventListener("click", () => {
+            editor.carregarMapa(Android.ler(document.getElementById("json").value));
+            editor.attListaCamadas();
+        });
         
         document.getElementById("imgTileset").addEventListener("change", (e) => {
           const arquivo = e.target.files[0];

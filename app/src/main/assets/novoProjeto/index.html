@@ -106,12 +106,72 @@ html, body {
 	</div>
 <script>
 const antigoConsoleLog = console.log;
-console.log = function(){
+console.log = function() {
     antigoConsoleLog.apply(console, arguments);
-    const msg = Array.prototype.slice.call(arguments).join(" ");
+    const msg = Array.from(arguments).map(arg => {
+        if(arg instanceof Error) {
+            return `Erro: ${arg.message}\nStack: ${arg.stack}`;
+        } else if(typeof arg === 'object' && arg !== null) {
+            try {
+                return JSON.stringify(arg, null, 2);
+            } catch(e) {
+                return String(arg);
+            }
+        } else {
+            return String(arg);
+        }
+    });
     const div = document.getElementById("console");
-    if(div) div.innerHTML += msg + "\n";
+    if(div) {
+        div.innerHTML += msg.join(' ') + '\n';
+        div.scrollTop = div.scrollHeight;
+    }
 };
+
+const antigoConsoleError = console.error;
+console.error = function() {
+    antigoConsoleError.apply(console, arguments);
+    const msg = Array.from(arguments).map(arg => {
+        if(arg instanceof Error) {
+            return `❌ ERRO: ${arg.message}\nStack: ${arg.stack}`;
+        } else if(typeof arg === 'object' && arg !== null) {
+            try {
+                return `❌ ${JSON.stringify(arg, null, 2)}`;
+            } catch(e) {
+                return `❌ ${String(arg)}`;
+            }
+        } else {
+            return `❌ ${String(arg)}`;
+        }
+    });
+    const div = document.getElementById("console");
+    if(div) {
+        div.innerHTML += msg.join(' ') + '\n';
+        div.scrollTop = div.scrollHeight;
+    }
+};
+
+const antigoConsoleWarn = console.warn;
+console.warn = function() {
+    antigoConsoleWarn.apply(console, arguments);
+    const msg = Array.from(arguments).map(arg => {
+        if(typeof arg === 'object' && arg !== null) {
+            try {
+                return `⚠️ ${JSON.stringify(arg, null, 2)}`;
+            } catch(e) {
+                return `⚠️ ${String(arg)}`;
+            }
+        } else {
+            return `⚠️ ${String(arg)}`;
+        }
+    });
+    const div = document.getElementById("console");
+    if(div) {
+        div.innerHTML += msg.join(' ') + '\n';
+        div.scrollTop = div.scrollHeight;
+    }
+};
+
 let dev = false;
 const engine = new Engine("telaJogo", true, false);
 const editor = ace.edit("editorCodigo");
@@ -169,8 +229,9 @@ function executar() {
   }
   eval(editor.getValue());
 }
+document.getElementById("nomeArquivo").value = "jogo.js";
 if(!dev) abrir();
-editor.setValue("const b = {\n  x: 0, y: 0,\n  escalaX: 60, escalaY: 60,\n  cor: \"blue\", click: () => console.log(\"teste\")\n};\nengine.addBotao(b);", -1);
+if(dev) editor.setValue("const b = {\n  x: 0, y: 0,\n  escalaX: 60, escalaY: 60,\n  cor: \"blue\", click: () => console.log(\"teste\")\n};\nengine.addBotao(b);", -1);
 </script>
   </body>
 </html>
