@@ -4,7 +4,7 @@
   <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Eco-Engine - nucleo</title>
+	<title>Eco-Engine</title>
 	<script src="engine.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.3/ace.js"></script>
 <style>
@@ -56,7 +56,7 @@ html, body {
   width:100%;
   height:100%;
 }
-#editorMapas {
+#pagina {
   width:100%;
   height:100%;
   display:block;
@@ -83,7 +83,7 @@ html, body {
 		<option value="jogo">Jogo</option>
 		<option value="editor">Editor</option>
 		<option value="console">Console</option>
-		<option value="editorTiles">Editor de mapas</option>
+		<option value="editorTiles.html">Editor de mapas</option>
 	  </select>
 	  <button onclick="abrir()">Abrir</button>
 	  <input id="nomeArquivo" type="text" value="jogo.js">
@@ -94,7 +94,7 @@ html, body {
 	</div>
 	<div id="conteudo">
 	  <div id="editorTiles" class="pagina">
-		<iframe id="editorMapas"></iframe>
+		<iframe id="pagina"></iframe>
 	  </div>
 	  <div id="jogo" class="pagina ativa">
 		<canvas id="telaJogo"></canvas>
@@ -173,13 +173,16 @@ console.log("console...");
 
 function trocarPagina(id) {
   const paginas = document.querySelectorAll(".pagina");
-  for(let i=0; i<paginas.length; i++) paginas[i].classList.remove("ativa");
-  document.getElementById(id).classList.add("ativa");
-  if(id == "editorTiles") document.getElementById("editorMapas").src = "editorTiles.html";
+  for(let i = 0; i < paginas.length; i++) paginas[i].classList.remove("ativa");
+
+  if(id.includes("/") || id.endsWith(".html")) {
+    document.getElementById("editorTiles").classList.add("ativa");
+    document.getElementById("pagina").src = id;
+  } else document.getElementById(id).classList.add("ativa");
 }
 
 function trocarPaginaB() {
-  const lista = ["jogo", "editor", "console", "editorTiles"];
+  const lista = Array.from(document.getElementById("listaPaginas").options).map(opcao => opcao.value);
   const atual = document.getElementById("listaPaginas").value;
   let indice = lista.indexOf(atual);
   if(indice > 0) indice--;
@@ -188,7 +191,7 @@ function trocarPaginaB() {
 }
 
 function trocarPaginaP() {
-  const lista = ["jogo", "editor", "console", "editorTiles"];
+  const lista = Array.from(document.getElementById("listaPaginas").options).map(opcao => opcao.value);
   const atual = document.getElementById("listaPaginas").value;
   let indice = lista.indexOf(atual);
   if(indice < lista.length - 1) indice++;
@@ -213,11 +216,12 @@ function abrir() {
 function executar() {
   console.clear();
   document.getElementById("console").innerHTML = "";
-  console.log("~ $ console...");
+  console.log("console...");
   engine.limpar();
   if(!dev) {
       Android.limparLogs();
       Android.msg("Rodando...");
+      console.log("rodando...");
   }
   eval(editor.getValue());
 }

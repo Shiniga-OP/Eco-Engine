@@ -96,7 +96,7 @@
             color: #4caf50;
         }
         
-        .codigo-texto {
+        .codigo {
             background: #1e1e1e;
             padding: 15px;
             border-radius: 5px;
@@ -105,12 +105,12 @@
             font-family: 'Courier New', monospace;
         }
         
-        .codigo-comentario { color: #6a9955; }
-        .codigo-chave { color: #569cd6; }
-        .codigo-api { color: #6DF7B1FF; }
-        .codigo-func { color: #dcdcaa; }
-        .codigo-num { color: #FF22A9FF; }
-        .codigo-string { color: #ce9178; }
+        .coment { color: #6a9955; }
+        .chave { color: #569cd6; }
+        .api { color: #6DF7B1FF; }
+        .func { color: #dcdcaa; }
+        .num { color: #FF22A9FF; }
+        .string { color: #ce9178; }
         
         .bt {
             display: inline-block;
@@ -194,24 +194,24 @@
         <div class="sessao">
             <h2>API Java</h2>
             <p>A API Java da game engine possui métodos essenciais para recursos geralmente utilizados:</p>
-            <div class="codigo-texto">
-                <span class="codigo-comentario">// retorna verdadeiro se o arquivo existir</span><br>
-                <span class="codigo-chave">let</span> seExiste = <span class="codigo-func">Android</span>.arquivoExiste(<span class="codigo-string">"caminho/arquivo.txt"</span>);<br><br>
-                <span class="codigo-comentario">// retorna verdadeiro se o caminho for uma pasta</span><br>
-                <span class="codigo-chave">let</span> ehDiretorio = <span class="codigo-func">Android</span>.ehDir(<span class="codigo-string">"caminho/pasta"</span>);<br><br>
-                <span class="codigo-comentario">// listar todos os arquivos do caminho</span><br>
-                <span class="codigo-chave">const</span> array = <span class="codigo-func">Android</span>.listarArquivos(<span class="codigo-string">"caminho/arquivos/"</span>);<br><br>
-                <span class="codigo-comentario">// armazenar dados em arquivo</span><br>
-                <span class="codigo-func">Android</span>.arquivar(<span class="codigo-string">"caminho.txt"</span>, conteudoString);<br><br>
+            <div class="codigo">
+                <span class="coment">// retorna verdadeiro se o arquivo existir</span><br>
+                <span class="chave">let</span> seExiste = <span class="func">Android</span>.arquivoExiste(<span class="string">"caminho/arquivo.txt"</span>);<br><br>
+                <span class="coment">// retorna verdadeiro se o caminho for uma pasta</span><br>
+                <span class="chave">let</span> ehDiretorio = <span class="func">Android</span>.ehDir(<span class="string">"caminho/pasta"</span>);<br><br>
+                <span class="coment">// listar todos os arquivos do caminho</span><br>
+                <span class="chave">const</span> array = <span class="func">Android</span>.listarArquivos(<span class="string">"caminho/arquivos/"</span>);<br><br>
+                <span class="coment">// armazenar dados em arquivo</span><br>
+                <span class="func">Android</span>.arquivar(<span class="string">"caminho.txt"</span>, conteudoString);<br><br>
                 
-                <span class="codigo-comentario">// ler conteúdo de arquivo</span><br>
-                <span class="codigo-chave">const</span> conteudo = <span class="codigo-func">Android</span>.ler(<span class="codigo-string">"caminho.txt"</span>); <span class="codigo-comentario">// retorna o conteúdo em string</span><br><br>
+                <span class="coment">// ler conteúdo de arquivo</span><br>
+                <span class="chave">const</span> conteudo = <span class="func">Android</span>.ler(<span class="string">"caminho.txt"</span>); <span class="coment">// retorna o conteúdo em string</span><br><br>
                 
-                <span class="codigo-comentario">// excluir arquivo</span><br>
-                <span class="codigo-func">Android</span>.deletar(<span class="codigo-string">"caminho.txt"</span>);<br><br>
+                <span class="coment">// excluir arquivo</span><br>
+                <span class="func">Android</span>.deletar(<span class="string">"caminho.txt"</span>);<br><br>
                 
-                <span class="codigo-comentario">// exibir mensagem</span><br>
-                <span class="codigo-func">Android</span>.msg(<span class="codigo-string">"mensagem"</span>); <span class="codigo-comentario">// exibe com Toast.makeText(...).show()</span>
+                <span class="coment">// exibir mensagem</span><br>
+                <span class="func">Android</span>.msg(<span class="string">"mensagem"</span>); <span class="coment">// exibe com Toast.makeText(...).show()</span>
             </div>
             <p>Essas funcionalidades estão limitadas ao escopo do projeto, sem acessos totais ao armazenamento externo para segurança.</p>
         </div>
@@ -240,58 +240,73 @@
             <h2>Sobre Objetos basicos.</h2>
             <p>Um exemplo simples de como criar um jogo básico com a Eco-Engine:</p>
             
-            <div class="codigo-texto">
-                <span class="codigo-chave">const</span> player = {<br>
-                &nbsp;&nbsp;x: <span class="codigo-num">400</span>,<br>
-                &nbsp;&nbsp;y: <span class="codigo-num">225</span>,<br>
-                &nbsp;&nbsp;escalaX: <span class="codigo-num">40</span>,<br>
-                &nbsp;&nbsp;escalaY: <span class="codigo-num">40</span>,<br>
-                &nbsp;&nbsp;cor: <span class="codigo-string">"red"</span><br>
+            <div class="codigo">
+                <span class="chave">const</span> player = {<br>
+                &nbsp;&nbsp;x: <span class="num">400</span>,<br>
+                &nbsp;&nbsp;y: <span class="num">225</span>,<br>
+                &nbsp;&nbsp;escalaX: <span class="num">40</span>,<br>
+                &nbsp;&nbsp;escalaY: <span class="num">40</span>,<br>
+                &nbsp;&nbsp;cor: <span class="string">"red"</span><br>
                 };<br><br>
                 
-                <span class="codigo-comentario">// para adicionar na renderização:</span><br>
-                engine.<span class="codigo-func">add</span>(player);
+                <span class="coment">// para adicionar na renderização:</span><br>
+                engine.<span class="func">add</span>(player);
             </div>
             <!-- sprite basico -->
             <h2>Como criar um objeto sprite.</h2>
             <p>Você pode criar objetos sprite de duas formas.</p>
             <p>Primeiro e mais facíl:</p>
-            <div class="codigo-texto">
-                <span class="codigo-chave">const</span> player = engine.<span class="codigo-func">novoSprite</span>(<span class="codigo-string">"sprites/terra.png"</span>); <span class="codigo-comentario">// isto cria um sprite e adiciona para rendedização</span>
+            <div class="codigo">
+                <span class="chave">const</span> player = engine.<span class="func">novoSprite</span>(<span class="string">"sprites/terra.png"</span>); <span class="coment">// isto cria um sprite e adiciona para rendedização</span>
             </div>
             <p>E segundo, mais detalhado:</p>
-            <div class="codigo-texto">
-                <span class="codigo-chave">const</span> player = <span class="codigo-chave">new</span><span class="codigo-comentario"> Sprite</span>(<br>
-                &nbsp;&nbsp;<span class="codigo-string">"sprites/terra.png"</span>,<span class="codigo-comentario"> // caminho do sprite</span><br>
-                &nbsp;&nbsp;<span class="codigo-num">100</span>,<span class="codigo-comentario"> // posição X do sprite (opcional)</span><br>
-                &nbsp;&nbsp;<span class="codigo-num">100</span>,<span class="codigo-comentario"> // posição Y do sprite (opcional)</span><br>
-                &nbsp;&nbsp;<span class="codigo-num">60</span>,<span class="codigo-comentario"> // largura do sprite (opcional)</span><br>
-                &nbsp;&nbsp;<span class="codigo-num">60</span>,<span class="codigo-comentario"> // altura do sprite (opcional)</span><br>);<br>
-                engine.<span class="codigo-func">add</span>(player);
+            <div class="codigo">
+                <span class="chave">const</span> player = <span class="chave">new</span><span class="coment"> Sprite</span>(<br>
+                &nbsp;&nbsp;<span class="string">"sprites/terra.png"</span>,<span class="coment"> // caminho do sprite</span><br>
+                &nbsp;&nbsp;<span class="num">100</span>,<span class="coment"> // posição X do sprite (opcional)</span><br>
+                &nbsp;&nbsp;<span class="num">100</span>,<span class="coment"> // posição Y do sprite (opcional)</span><br>
+                &nbsp;&nbsp;<span class="num">60</span>,<span class="coment"> // largura do sprite (opcional)</span><br>
+                &nbsp;&nbsp;<span class="num">60</span>,<span class="coment"> // altura do sprite (opcional)</span><br>);<br>
+                engine.<span class="func">add</span>(player);
             </div>
             <!-- botões -->
             <h2>Sobre Botões.</h2>
             <p>Os botões funcionam como as sprites, porém com métodos a mais.</p>
-            <div class="codigo-texto">
-                <span class="codigo-chave">const</span> botao = {<br>
-                &nbsp;&nbsp;x: <span class="codigo-num">0</span>, y: <span class="codigo-num">0</span>,<br>
-                &nbsp;&nbsp;escalaX: <span class="codigo-num">60</span>, escalaY: <span class="codigo-num">60</span>,<br>
-                &nbsp;&nbsp;cor: <span class="codigo-string">"blue"</span>,<br>
-                &nbsp;&nbsp;click: () <span class="codigo-chave">=></span> <span class="codigo-api">console</span>.<span class="codigo-func">log</span>(<span class="codigo-string">"clicado"</span>);<br>
-                &nbsp;&nbsp;pressionado: () <span class="codigo-chave">=></span> player.x += <span class="codigo-num">1</span>,<br>
-                &nbsp;&nbsp;noFim: () <span class="codigo-chave">=></span> {<br>
-                &nbsp;&nbsp;&nbsp;&nbsp;<span class="codigo-api">console</span>.<span class="codigo-func">log</span>(<span class="codigo-string">"o botão deixou de ser pressionado"</span>);<br>
-                &nbsp;&nbsp;&nbsp;&nbsp;player.x = <span class="codigo-num">0</span>;<br>
+            <div class="codigo">
+                <span class="chave">const</span> botao = {<br>
+                &nbsp;&nbsp;x: <span class="num">0</span>, y: <span class="num">0</span>,<br>
+                &nbsp;&nbsp;escalaX: <span class="num">60</span>, escalaY: <span class="num">60</span>,<br>
+                &nbsp;&nbsp;cor: <span class="string">"blue"</span>,<br>
+                &nbsp;&nbsp;click: () <span class="chave">=></span> <span class="api">console</span>.<span class="func">log</span>(<span class="string">"clicado"</span>);<br>
+                &nbsp;&nbsp;pressionado: () <span class="chave">=></span> player.x += <span class="num">1</span>,<br>
+                &nbsp;&nbsp;noFim: () <span class="chave">=></span> {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="api">console</span>.<span class="func">log</span>(<span class="string">"o botão deixou de ser pressionado"</span>);<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;player.x = <span class="num">0</span>;<br>
                 &nbsp;&nbsp;}<br>
                 };<br>
-                engine.<span class="codigo-func">addBotao</span>(botao);
+                engine.<span class="func">addBotao</span>(botao);
             </div>
             <p>"engine.addBotao(...);" também adiciona o botão para renderização automatica. Você pode utilizar esse sistema para sprites também. Lembre-se de adicionar o método ANTES de utilizar "engine.addBotao(...);".</p><br>
             <p>Exemplo:</p>
-            <div class="codigo-texto">
-                <span class="codigo-comentario">// botao criado com new Sprite(...);</span><br>
-                botao.pressionado = () <span class="codigo-chave">=></span> player.x += <span class="codigo-num">1</span>;<br>
-                engine.<span class="codigo-func">addBotao</span>(botao);
+            <div class="codigo">
+                <span class="coment">// botao criado com new Sprite(...);</span><br>
+                botao.pressionado = () <span class="chave">=></span> player.x += <span class="num">1</span>;<br>
+                engine.<span class="func">addBotao</span>(botao);
+            </div>
+            <p>Você pode criar camadas com:</p>
+            <div class="codigo">
+                <span class="chave">const</span> camada = engine.<span class="func">novaCamada</span>();<br><br>
+                <span class="coment">// ou:</span><br><br>
+                <span class="chave">const</span> camada = [];<br>
+                engine.camadas.<span class="func">push</span>(camada);
+            </div>
+            <p>Que retorna um array, onde os objetos serão armazenados. você pode remover com:</p>
+            <div class="codigo">
+                engine.<span class="func">rm</span>(camada, engine.camadas);
+            </div>
+            <p>Isto serve para a maioria dos casos. Porém, para remover objetos em camadas é necessário especificiar a camada onde ele está.</p>
+            <div class="codigo">
+                engine.<span class="func">rm</span>(player, camada);
             </div>
         </div>
         <footer>

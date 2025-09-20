@@ -16,7 +16,11 @@
         font-family: monospace;
         overflow: hidden;
       }
-      #barraFerramentas, #projetos {
+      p {
+          color: white;
+          margin: 5px;
+      }
+      #barraFerramentas, #projetos, #projeto {
         border: 1px solid #444;
         display: flex;
         padding: 5px;
@@ -30,6 +34,10 @@
         left: 0; 
         right: 0;
         top: 50px;
+      }
+      #icone {
+          width: 50px;
+          height: 50px;
       }
       #barraFerramentas select, #barraFerramentas input, #barraFerramentas button {
         margin-right: 5px;
@@ -79,7 +87,6 @@
       </div>
       <button onclick="confirmarNovo()">Ok</button>
       <button onclick="cancelarNovo()">Cancelar</button>
-      <button onclick="atualizar()">Atualizar</button>
     </div>
     <script>
       function criarNovo() {
@@ -109,18 +116,28 @@
             const listaArquivos = JSON.parse(arquivos.replace("[", "[\"").replace("]", "\"]").replace(/, /g, "\",\""));
             
             listaArquivos.forEach(arquivo => {
+              if(!Android.ehDir(arquivo)) return;
               const projeto = document.createElement("div");
-              projeto.textContent = arquivo;
-              projeto.style.cursor = "pointer";
-              projeto.style.margin = "5px";
-              projeto.onclick = function() {
-                abrirProjeto(arquivo);
-              };
+              const img = document.createElement("img");
+              const info = document.createElement("div");
+              const texto = document.createElement("div");
+              const versao = document.createElement("p");
+              img.src = arquivo+"/icone.png";
+              versao.textContent = Android.ler(arquivo+"/versao.txt");
+              img.id = "icone";
+              texto.textContent = arquivo;
+              texto.style.cursor = "pointer";
+              texto.style.margin = "5px";
+              texto.onclick = () => abrirProjeto(arquivo);
+              projeto.id = "projeto";
+              projeto.appendChild(img);
+              info.appendChild(texto);
+              info.appendChild(versao);
+              projeto.appendChild(info);
               divProjetos.appendChild(projeto);
             });
         } catch(e) {
-          alert("Erro ao carregar projetos:", e);
-          document.getElementById("projetos").innerHTML = "Erro ao carregar projetos";
+          document.getElementById("projetos").innerHTML = "Erro ao carregar projetos: " + e.message;
         }
       }
       
