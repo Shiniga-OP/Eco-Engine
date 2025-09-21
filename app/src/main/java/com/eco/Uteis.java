@@ -10,7 +10,6 @@ import android.widget.ArrayAdapter;
 import android.view.LayoutInflater;
 import android.widget.ImageView;
 import android.widget.TextView;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.FileReader;
@@ -20,6 +19,7 @@ import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.io.InputStream;
+import android.widget.Toast;
 
 public class Uteis {}
 
@@ -135,12 +135,10 @@ class ArquivosUtil {
 	public static void copiarPastaAssets(Context contexto, String caminhoDestino, String caminhoAssets) {
 		try {
 			String[] arquivos = contexto.getAssets().list(caminhoAssets);
-
+			
 			if(arquivos != null && arquivos.length > 0) {
 				File pastaDestino = new File(caminhoDestino);
-				if (!pastaDestino.exists()) {
-					pastaDestino.mkdirs();
-				}
+				if(!pastaDestino.exists()) pastaDestino.mkdirs();
 
 				for(String arquivo : arquivos) {
 					String novoCaminhoAssets = caminhoAssets + "/" + arquivo;
@@ -149,10 +147,46 @@ class ArquivosUtil {
 					if(contexto.getAssets().list(novoCaminhoAssets).length > 0) copiarPastaAssets(contexto, novoCaminhoDestino, novoCaminhoAssets);
 					else copiarArquivoAssets(contexto, novoCaminhoDestino, novoCaminhoAssets);
 				}
+			} else {
+				Toast.makeText(contexto, "ERRO: arquivos não achados, quantidade de arquivos: "+arquivos.length, Toast.LENGTH_LONG).show();
+			}
+		} catch(IOException e) {
+			Toast.makeText(contexto, "ERRO: "+e, Toast.LENGTH_LONG).show();
+		}
+	}
+	
+	public static void copiarArquivoAssets(Context ctx, String caminhoDestino, String caminhoAssets) {
+		try {
+			if(!existeArqAssets(ctx, caminhoAssets)) {
+				Toast.makeText(ctx, "ERRO: arquivo não achado nos assets: "+ caminhoAssets, Toast.LENGTH_LONG).show();
+				return;
+			}
+			InputStream is = ctx.getAssets().open(caminhoAssets);
+			FileOutputStream fos = new FileOutputStream(new File(caminhoDestino));
+
+			byte[] buffer = new byte[1024];
+			int bytesConta;
+
+			while((bytesConta = is.read(buffer)) != -1) fos.write(buffer, 0, bytesConta);
+
+			fos.close();
+			is.close();
+		} catch (IOException e) {
+			Toast.makeText(ctx, "ERRO: "+e, Toast.LENGTH_LONG).show();
+		}
+	}
+	
+	public static boolean existeArqAssets(Context contexto, String caminhoAssets) {
+		try {
+			InputStream is = contexto.getAssets().open(caminhoAssets);
+			if(is != null) {
+				is.close();
+				return true;
 			}
 		} catch (IOException e) {
-			e.printStackTrace();
+			return false;
 		}
+		return false;
 	}
 	
 	public static boolean renomearPasta(String caminhoAntigo, String caminhoNovo) {
@@ -161,36 +195,15 @@ class ArquivosUtil {
 
 		return pastaAntiga.exists() && pastaAntiga.isDirectory() && pastaAntiga.renameTo(pastaNova);
 	}
-
-	public static void copiarArquivoAssets(Context contexto, String caminhoDestino, String caminhoAssets) {
-		try {
-			InputStream is = contexto.getAssets().open(caminhoAssets);
-			FileOutputStream fos = new FileOutputStream(new File(caminhoDestino));
-
-			byte[] buffer = new byte[1024];
-			int bytesRead;
-
-			while ((bytesRead = is.read(buffer)) != -1) {
-				fos.write(buffer, 0, bytesRead);
-			}
-
-			fos.close();
-			is.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
 	
 	public static void arquivarAssets(String caminhoExterno, InputStream is) {
 		try {
 			FileOutputStream fos = new FileOutputStream(new File(caminhoExterno));
 
 			byte[] buffer = new byte[1024];
-			int bytesRead;
+			int bytesConta;
 
-			while ((bytesRead = is.read(buffer)) != -1) {
-				fos.write(buffer, 0, bytesRead);
-			}
+			while((bytesConta = is.read(buffer)) != -1) fos.write(buffer, 0, bytesConta);
 
 			fos.close();
 			is.close();
@@ -240,9 +253,9 @@ class ArquivosUtil {
         File arquivoCP = new File(caminhoCP);
         File[] arquivos = arquivoCP.listFiles();
         File arquivoCL = new File(caminhoCL);
-        if(!arquivoCL.exists()) {
-            arquivoCL.mkdirs();
-        }
+		
+        if(!arquivoCL.exists()) arquivoCL.mkdirs();
+        
         for(File arquivo : arquivos) {
             if(arquivo.isFile()) {
                 copiarArquivo(arquivo.getPath(), caminhoCL + "/" + arquivo.getName());
@@ -254,10 +267,10 @@ class ArquivosUtil {
 
     public static void moverArquivo(String caminhoCT, String caminhoCL) {
         copiarArquivo(caminhoCT, caminhoCL);
-        deleteArquivo(caminhoCT);
+        delete(caminhoCT);
     }
 
-    public static void deleteArquivo(String caminho) {
+    public static void delete(String caminho) {
         File arquivo = new File(caminho);
 
         if(!arquivo.exists()) return;
@@ -270,12 +283,8 @@ class ArquivosUtil {
 
         if(arquivos != null) {
             for(File subArquivo : arquivos) {
-                if(subArquivo.isDirectory()) {
-                    deleteArquivo(subArquivo.getAbsolutePath());
-                }
-                if(subArquivo.isFile()) {
-                    subArquivo.delete();
-                }
+                if(subArquivo.isDirectory()) delete(subArquivo.getAbsolutePath());
+                if(subArquivo.isFile()) subArquivo.delete();
             }
         }
         arquivo.delete();

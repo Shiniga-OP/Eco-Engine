@@ -76,13 +76,13 @@
   <canvas id="telaJogo" width="400" height="300"></canvas>
   <!-- seletor de tiles -->
   <div id="tileDiv">
-    <img id="tiles" src="sprites/tileset2.png" class="tiles">
+    <img id="tiles" class="tiles">
     <label>Tileset sprite:</label>
-    <input type="file" class="tiles" id="imgTileset" accept="image/*">
+    <input type="text" placeholder="caminho do tileset" class="tiles" id="imgTileset">
     <button id="salvarTile">Salvar Mapa</button>
     <button id="carregarTile">Carregar Mapa</button>
     <label>Caminho do Mapa JSON:</label>
-    <input type="text" id="json" class="tiles">
+    <input type="text" id="json" placeholder="adicione o caminho a ser gravado ou carregado" class="tiles">
     <label>Camada:</label>
     <input type="number" id="camadaEntrada" class="tiles" value="0" min="0">
   </div>
@@ -110,7 +110,7 @@
         document.getElementById("removerCamada").addEventListener("click", () => editor.rmCamada());
         
         document.getElementById("salvarTile").addEventListener("click", () => {
-          Android.arquivar("mapa.json", JSON.stringify(editor.salvarMapa()));
+          Android.arquivar(document.getElementById("json").value, JSON.stringify(editor.salvarMapa()));
           alert("Mapa salvo");
         });
         document.getElementById("carregarTile").addEventListener("click", () => {
@@ -119,18 +119,8 @@
             alert("Mapa carregado");
         });
         document.getElementById("imgTileset").addEventListener("change", (e) => {
-          const arquivo = e.target.files[0];
-          if(arquivo) {
-            const leitor = new FileReader();
-            leitor.onload = (evento) => {
-              editor.tilesetImg.onload = () => {
-                editor.iniciarTileset();
-                editor.engine.renderizar();
-              };
-              editor.tilesetImg.src = evento.target.result;
-            };
-            leitor.readAsDataURL(arquivo);
-          }
+            const caminho = e.target.value;
+            editor.tilesetImg.src = caminho;
         });
         document.getElementById("camadaEntrada").addEventListener("change", (e) => {
           const camada = parseInt(e.target.value);

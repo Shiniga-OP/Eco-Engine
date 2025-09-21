@@ -34,8 +34,8 @@ public class MainActivity extends Activity {
 	public Console console = new Console();
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    protected void onCreate(Bundle s) {
+        super.onCreate(s);
         setContentView(R.layout.activity_main);
 
         tela = findViewById(R.id.tela);
@@ -53,30 +53,30 @@ public class MainActivity extends Activity {
     }
 	
 	public void iniciar() {
-		if(new File(ArquivosUtil.obterArmaExterno()+"/.ECO/inicio.html").exists()) {
-			configurarWebView();
-			tela.addJavascriptInterface(new APIJava(this, ArquivosUtil.obterArmaExterno()+"/.ECO/", console), "Android");
-			tela.loadUrl("file://"+ArquivosUtil.obterArmaExterno()+"/.ECO/inicio.html");
+		configurarWebView();
+		String caminho = ArquivosUtil.obterArmaExterno()+"/ECO/";
+		tela.addJavascriptInterface(new APIJava(this, caminho, console), "Android");
+		File ecoDir = new File(caminho);
+		if(!ecoDir.exists()) ecoDir.mkdirs();
+		if(new File(caminho+"inicio.html").exists()) {
+			Toast.makeText(this, "Página inicial carregada", Toast.LENGTH_SHORT).show();
 		} else {
-			configurarWebView();
-			ArquivosUtil.copiarArquivoAssets(this, ArquivosUtil.obterArmaExterno()+"/.ECO/inicio.html", "inicio.html");
-			tela.addJavascriptInterface(new APIJava(this, ArquivosUtil.obterArmaExterno()+"/.ECO/", console), "Android");
-			tela.loadUrl("file://"+ArquivosUtil.obterArmaExterno()+"/.ECO/inicio.html");
+			Toast.makeText(this, "Página inicial carregando", Toast.LENGTH_SHORT).show();
+			ArquivosUtil.copiarArquivoAssets(this, caminho+"inicio.html", "ECO/inicio.html");
+			if(new File(caminho+"inicio.html").exists()) Toast.makeText(this, "Página inicial carregada", Toast.LENGTH_SHORT).show();
+			else Toast.makeText(this, "ERRO: arquivo inicio.html não achado", Toast.LENGTH_LONG).show();
 		}
+		tela.loadUrl("file://"+caminho+"inicio.html");
 	}
 
-    public void carregarPagina(String nome) {
-		try {
-			String caminho = ArquivosUtil.obterArmaExterno()+"/.ECO/"+nome+"index.html";
-			if(new File(caminho).exists()) {
-				return;
-			} else {
-				ArquivosUtil.criarDir(caminho.replace("index.html", ""));
-				ArquivosUtil.copiarPastaAssets(this, caminho.replace("index.html", ""), "novoProjeto");
-				Toast.makeText(this, "projeto criado", Toast.LENGTH_LONG).show();
-			}
-		} catch(Exception e) {
+    public void novoProjeto(String nome) {
+		String caminho = ArquivosUtil.obterArmaExterno()+"/ECO/"+nome+"/";
+		if(new File(caminho).exists()) {
 			return;
+		} else {
+			ArquivosUtil.criarDir(caminho);
+			ArquivosUtil.copiarPastaAssets(this, caminho, "novoProjeto");
+			Toast.makeText(this, "projeto criado", Toast.LENGTH_LONG).show();
 		}
 	}
 
@@ -106,7 +106,7 @@ public class MainActivity extends Activity {
 				}
 
 				public boolean tratarNavegacao(String url) {
-					if(url.startsWith("http://") || url.startsWith("https://")) {
+					if(url.startsWith("http://")) {
 						Intent intencao = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
 						startActivity(intencao);
 						return true;
@@ -185,6 +185,7 @@ public class MainActivity extends Activity {
 		public Context ctx;
 		public Console console;
 		private ArquivosUtil arq = new ArquivosUtil();
+		private File ecoDir = new File(ArquivosUtil.obterArmaExterno()+"/ECO/");
 
 		public APIJava(Context ctx, String pacote, Console console) {
 			this.ctx = ctx;
@@ -218,13 +219,18 @@ public class MainActivity extends Activity {
 		}
 		
 		@JavascriptInterface
+		public void renomear(String caminhoDestino, String caminhoNovo) {
+			arq.renomearPasta(caminhoDestino, caminhoNovo);
+		}
+		
+		@JavascriptInterface
 		public boolean ehDir(String caminho) {
 			return (new File(pacote+caminho).isDirectory());
 		}
 
 		@JavascriptInterface
 		public void deletar(String caminho) {
-			arq.deleteArquivo(pacote+caminho);
+			arq.delete(pacote+caminho);
 		}
 
 		@JavascriptInterface
@@ -245,9 +251,23 @@ public class MainActivity extends Activity {
 		}
 		
 		@JavascriptInterface
+		public void pacoteAdd(String novo) {
+			pacote += novo + "/";
+		}
+		
+		@JavascriptInterface
+		public void pacoteSub() {
+			File anterior = (new File(pacote).getParentFile());
+			if(anterior.getAbsolutePath() == ecoDir.getAbsolutePath()) {
+				Toast.makeText(ctx, "Acesso ao armazenamento externo não é permitido", Toast.LENGTH_LONG).show();
+				return;
+			}
+			pacote = anterior.getAbsolutePath() + "/";
+		}
+		
+		@JavascriptInterface
 		public void criarProjeto(String nome) {
-			pacote += nome + "/";
-			carregarPagina(nome+"/");
+			novoProjeto(nome);
 		}
 	}
 }
