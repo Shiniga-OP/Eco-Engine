@@ -40,13 +40,6 @@ public class MainActivity extends Activity {
 
         tela = findViewById(R.id.tela);
 
-		tela.getSettings().setAllowFileAccess(true);
-		tela.getSettings().setAllowContentAccess(true);
-
-		if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-			tela.getSettings().setAllowFileAccessFromFileURLs(true);
-			tela.getSettings().setAllowUniversalAccessFromFileURLs(true);
-		}
         pedirPermissao();
 		System.setOut(console);
 		System.setErr(console);
@@ -199,8 +192,8 @@ public class MainActivity extends Activity {
 		}
 
 		@JavascriptInterface
-		public void msg(String m, int tempo) {
-			Toast.makeText(ctx, m, tempo).show();
+		public void msgLonga(String m) {
+			Toast.makeText(ctx, m, Toast.LENGTH_LONG).show();
 		}
 
 		@JavascriptInterface
@@ -221,6 +214,12 @@ public class MainActivity extends Activity {
 		@JavascriptInterface
 		public void renomear(String caminhoDestino, String caminhoNovo) {
 			arq.renomearPasta(caminhoDestino, caminhoNovo);
+		}
+		
+		@JavascriptInterface
+		public void copiar(String caminhoDestino, String caminhoNovo) {
+			if(ehDir(caminhoDestino) && ehDir(caminhoNovo)) arq.copiarDir(caminhoDestino, caminhoNovo);
+			else arq.copiarArquivo(caminhoDestino, caminhoNovo);
 		}
 		
 		@JavascriptInterface
@@ -246,7 +245,7 @@ public class MainActivity extends Activity {
 		@JavascriptInterface
 		public String listarArquivos(String caminho) {
 			ArrayList<String> lista = new ArrayList<>();
-			ArquivosUtil.listarArquivos(pacote + caminho, lista);
+			arq.listarArquivos(pacote + caminho, lista);
 			return lista.toString();
 		}
 		

@@ -100,6 +100,7 @@
         editor.engine.canvas.addEventListener("touchstart", (e) => {
           if(editor.modo == "desenhar") editor.addTile(e);
           else if(editor.modo == "apagar") editor.rmTile(e);
+          else if(editor.modo == "balde") editor.preencher(e);
         });
         editor.engine.canvas.addEventListener("touchmove", (e) => {
           if(editor.modo == "desenhar") editor.addTile(e);
@@ -141,6 +142,11 @@
         editor.engine.zoom.ativo = false;
         document.getElementById("multuso").textContent = "🧽";
       } else if(editor.modo == "apagar") {
+        editor.modo = "balde";
+        editor.ativo = true;
+        editor.engine.zoom.ativo = false;
+        document.getElementById("multuso").textContent = "🪣";
+      } else if(editor.modo == "balde") {
         editor.modo = "vazio";
         editor.ativo = false;
         editor.engine.zoom.ativo = true;

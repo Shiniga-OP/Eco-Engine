@@ -540,6 +540,63 @@ class EditorMapas {
         this.tileSelecionado = { x, y };
       }
       
+      preencher(e) {
+          if(this.modo != "balde" || !this.ativo) return;
+          
+          const coords = this.engine.obterCoordGlobal(e);
+          const x = Math.floor(coords.x / this.tamanhoTile);
+          const y = Math.floor(coords.y / this.tamanhoTile);
+          
+          if(x < 0 || y < 0 || x >= this.mapaTiles[0][0].length || y >= this.mapaTiles[0].length) return;
+          const tileAlvo = this.mapaTiles[this.camadaAtual][y][x];
+          const tileSelecionado = this.tileSelecionado;
+          
+          if(tileAlvo && 
+          tileAlvo.sx === tileSelecionado.x * this.tamanhoTile &&
+          tileAlvo.sy === tileSelecionado.y * this.tamanhoTile) return;
+          
+          this.preencherArea(x, y, tileAlvo);
+          this.engine.renderizar();
+      }
+      
+      preencherArea(xInicial, yInicial, tileAlvo) {
+          const fila = [[xInicial, yInicial]];
+          const visitados = new Set();
+          const largura = this.mapaTiles[0][0].length;
+          const altura = this.mapaTiles[0].length;
+          
+          while(fila.length > 0) {
+              const [x, y] = fila.shift();
+              const chave = `${x},${y}`;
+              
+              if(visitados.has(chave)) continue;
+              if(x < 0 || x >= largura || y < 0 || y >= altura) continue;
+              const tileAtual = this.mapaTiles[this.camadaAtual][y][x];
+              
+              const mesmoTipo = (!tileAlvo && !tileAtual) || (tileAlvo && tileAtual && tileAlvo.sx === tileAtual.sx && tileAlvo.sy === tileAtual.sy);
+              if(!mesmoTipo) continue;
+              visitados.add(chave);
+              if(tileAtual) {
+                  this.engine.rm(tileAtual, this.engine.camadas[this.camadaAtual]);
+              }
+              const novoTile = this.engine.novoSprite(
+                  this.tilesetImg.src,
+                  this.engine.camadas[this.camadaAtual]);
+                  novoTile.x = x * this.tamanhoTile;
+                  novoTile.y = y * this.tamanhoTile;
+                  novoTile.escalaX = this.tamanhoTile;
+                  novoTile.escalaY = this.tamanhoTile;
+                  novoTile.imagem = this.tilesetImg;
+                  novoTile.sx = this.tileSelecionado.x * this.tamanhoTile;
+                  novoTile.sy = this.tileSelecionado.y * this.tamanhoTile;
+                  novoTile.sEX = this.tamanhoTile;
+                  novoTile.sEY = this.tamanhoTile;
+                  
+                  this.mapaTiles[this.camadaAtual][y][x] = novoTile;
+                  fila.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
+          }
+      }
+      
       addTile(e) {
         if(this.modo != "desenhar" || !this.ativo) return;
         

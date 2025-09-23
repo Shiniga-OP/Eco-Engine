@@ -163,6 +163,7 @@
         <header>
             <div class="logo">🕹️</div>
             <h1>Eco-Engine</h1>
+            <h2>(Documentação)</h2>
             <p class="linha-marcada">Game Engine Mobile para criação de jogos 2D em JavaScript</p>
             <p>Desenvolvida por Shiniga-OP</p>
         </header>
@@ -192,41 +193,43 @@
             </div>
         </div>
         <div class="sessao">
-            <h2>API Java</h2>
-            <p>A API Java da game engine possui métodos essenciais para recursos geralmente utilizados:</p>
+            <h2>Sobre API Java:</h2>
+            <p>A API Java da engine possui métodos essenciais para recursos geralmente utilizados:</p>
             <div class="codigo">
                 <span class="coment">// retorna verdadeiro se o arquivo existir</span><br>
                 <span class="chave">let</span> seExiste = <span class="func">Android</span>.arquivoExiste(<span class="string">"caminho/arquivo.txt"</span>);<br><br>
+                
                 <span class="coment">// retorna verdadeiro se o caminho for uma pasta</span><br>
                 <span class="chave">let</span> ehDiretorio = <span class="func">Android</span>.ehDir(<span class="string">"caminho/pasta"</span>);<br><br>
-                <span class="coment">// listar todos os arquivos do caminho</span><br>
+                
+                <span class="coment">// lista todos os arquivos do caminho</span><br>
                 <span class="chave">const</span> array = <span class="func">Android</span>.listarArquivos(<span class="string">"caminho/arquivos/"</span>);<br><br>
-                <span class="coment">// armazenar dados em arquivo</span><br>
+                
+                <span class="coment">// armazena dados em arquivo</span><br>
                 <span class="func">Android</span>.arquivar(<span class="string">"caminho.txt"</span>, conteudoString);<br><br>
+                
+                <span class="coment">// renomea arquivos e pastas</span><br>
+                <span class="func">Android</span>.renomear(<span class="string">"arquivo.txt"</span>, <span class="string">"novo.txt"</span>);<br><br>
                 
                 <span class="coment">// ler conteúdo de arquivo</span><br>
                 <span class="chave">const</span> conteudo = <span class="func">Android</span>.ler(<span class="string">"caminho.txt"</span>); <span class="coment">// retorna o conteúdo em string</span><br><br>
                 
-                <span class="coment">// excluir arquivo</span><br>
+                <span class="coment">// excluí arquivo ou pasta</span><br>
                 <span class="func">Android</span>.deletar(<span class="string">"caminho.txt"</span>);<br><br>
                 
-                <span class="coment">// exibir mensagem</span><br>
-                <span class="func">Android</span>.msg(<span class="string">"mensagem"</span>); <span class="coment">// exibe com Toast.makeText(...).show()</span>
+                <span class="coment">// exibir mensagem com Toast</span><br>
+                <span class="func">Android</span>.msg(<span class="string">"mensagem"</span>);<br><br>
+                
+                <span class="coment">// move o escopo da API Java para frente</span><br>
+                <span class="func">Android</span>.pacoteAdd(<span class="string">"pasta"</span>);<br><br>
+                
+                <span class="coment">// move o escopo da API uma pasta para trás (limite até a pasta da engine)</span><br>
+                <span class="func">Android</span>.pacoteSub();<br><br>
+                
+                <span class="coment">// cria um projeto padrão</span><br>
+                <span class="func">Android</span>.criarProjeto(<span class="string">"nome"</span>);
             </div>
             <p>Essas funcionalidades estão limitadas ao escopo do projeto, sem acessos totais ao armazenamento externo para segurança.</p>
-        </div>
-        <div class="sessao">
-            <h2>Status do Desenvolvimento</h2>
-            <ul class="status-lista">
-                <li class="em-progresso">Interface</li>
-                <li>Sistema de navegação em páginas</li>
-                <li class="em-progresso">Editor de mapas padrão</li>
-                <li class="pendente">Complementar a API Java</li>
-                <li class="pendente">Configurações visuais</li>
-                <li class="pendente">Geração de APK</li>
-                <li>Console</li>
-                <li>Botões de navegação entre páginas</li>
-            </ul>
         </div>
         <div class="sessao">
             <h2>Como Começar</h2>
@@ -307,6 +310,17 @@
             <p>Isto serve para a maioria dos casos. Porém, para remover objetos em camadas é necessário especificiar a camada onde ele está.</p>
             <div class="codigo">
                 engine.<span class="func">rm</span>(player, camada);
+            </div>
+            <h2>Sobre mapas:</h2>
+            <p>Para carregar mapas feitos no Editor de Mapas da engine, você precisa do arquivo JSON na pasta do projeto:</p>
+            <div class="codigo">
+                <span class="chave">const</span> mapaImg = <span class="chave">new</span> <span class="coment">Image</span>(); <span class="coment">// imagem usada para construir o mapa</span><br>
+                tileset.src = <span class="string">"sprites/tileset2.png"</span>; <span class="coment">// caminho do tileset</span><br><br>
+                <span class="chave">const</span> editor = <span class="chave">new</span> <span class="coment">EditorMapas</span>(<br>
+                &nbsp;&nbsp;tileset,<br>
+                &nbsp;&nbsp;<span class="string">"telaJogo"</span><span class="coment"> // ID do canvas atual (tela)</span><br>);<br><br>
+                <span class="chave">const</span> mapa = <span class="coment">Android</span>.<span class="func">ler</span>(<span class="string">"mapa.json"</span>); <span class="coment">// recupere o conteúdo do JSON</span><br>
+                editor.<span class="func">carregarMapa</span>(mapa); <span class="coment">// carregue o mapa</span>
             </div>
         </div>
         <footer>
