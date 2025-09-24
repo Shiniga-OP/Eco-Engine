@@ -17,18 +17,18 @@ editor de codigo AceEditor com autocompletar e analise de sintaxe em tempo real 
 veja a documentação mais recente em *doc.html*.
 
 ## lista de recursos:
-1. [x] interface. (97%)
+1. [x] interface. (98%)
 2. [x] sistema de navegação em paginas. (100%)
-3. [x] finalizar o editor de mapas padrão. (94%)
+3. [x] finalizar o editor de mapas padrão. (97%)
 4. [x] complementar a API Java. (78%)
-5. [x] fazer documentação da engine. (25%)
-6. [x] configurações visuais. (30%)
+5. [x] fazer documentação da engine. (30%)
+6. [x] configurações visuais. (50%)
 7. [ ] geração de APK.
 8. [x] console. (98%)
 9. [x] controles de navegação entre paginas. (100%);
-10. [x] sistema de camêra. (25%)
+10. [x] sistema de camêra. (77%)
 11. [x] sistema de zoom. (30%)
-12. [x] gerenciador de arquivos. (80%)
+12. [x] gerenciador de arquivos. (83%)
 13. [ ] sistemas adicionais do editor de mapas.
 14. [ ] unificação de certas paginas (console, editor de mapas, etc).
 15. [x] executor de codigo (ainda usando eval). (80%)
