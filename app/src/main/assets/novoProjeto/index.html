@@ -17,11 +17,20 @@ html, body {
   font-family:monospace;
   overflow:hidden;
 }
-#barraFerramentas {
+#barraFerramentas, #pasta {
+  border:1px solid #444;
   display:flex;
   padding:5px;
 }
 #barraFerramentas select, input, button {
+  margin-right:5px;
+  background:#111;
+  border:1px solid #444;
+  color:#0f0;
+  padding:5px;
+  cursor:pointer;
+}
+#pasta select, input, button {
   margin-right:5px;
   background:#111;
   border:1px solid #444;
@@ -83,13 +92,14 @@ html, body {
   </head>
   <body>
 	<div id="barraFerramentas">
+	  <button onClick="reiniciar()">reiniciar</button>
 	  <button onClick="voltarCasa()">Casa</button>
 	  <select id="listaPaginas" onchange="trocarPagina(this.value)">
 		<option value="jogo">Jogo</option>
 		<option value="editor">Editor</option>
 		<option value="arquivosDiv">Arquivos</option>
 		<option value="console">Console</option>
-		<option value="editorTiles.html">Editor de mapas</option>
+		<option value="editorMapas.html">Editor de mapas</option>
 	  </select>
 	  <button onclick="abrir()">Abrir</button>
 	  <input id="nomeArquivo" type="text" placeholder="caminho do arquivo">
@@ -99,7 +109,7 @@ html, body {
 	  <button onclick="trocarPaginaP()">></button>
 	</div>
 	<div id="conteudo">
-	  <div id="editorTiles" class="pagina">
+	  <div id="editorMapas" class="pagina">
 		<iframe id="pagina"></iframe>
 	  </div>
 	  <div id="jogo" class="pagina ativa">
@@ -175,6 +185,7 @@ console.warn = function() {
 };
 let caminho = "";
 let dev = false;
+let modoDelete = false;
 const editor = ace.edit("editorCodigo");
 editor.setTheme("ace/theme/monokai");
 editor.session.setMode("ace/mode/javascript");
@@ -225,6 +236,9 @@ function salvar() {
 function abrir() {
   if(dev) return;
   const arq = document.getElementById("nomeArquivo").value.trim();
+  if(arq.endsWith(".html")) editor.session.setMode("ace/mode/html");
+  else if(arq.endsWith(".css")) editor.session.setMode("ace/mode/css");
+  else if(arq.endsWith(".js")) editor.session.setMode("ace/mode/javascript");
   editor.setValue(Android.ler(arq), -1);
   Android.msg("Arquivo aberto");
 }
@@ -240,7 +254,7 @@ function executar() {
   try {
     eval(editor.getValue());
   } catch(msg) {
-      const div = document.getElementById("console");
+    const div = document.getElementById("console");
     if(div) {
         div.innerHTML += msg.message + '\n';
         div.scrollTop = div.scrollHeight;
@@ -253,14 +267,15 @@ function atualizar() {
             const arquivos = Android.listarArquivos(caminho);
             const divProjetos = document.getElementById("arquivos");
             const listaArquivos = JSON.parse(arquivos.replace("[", "[\"").replace("]", "\"]").replace(/, /g, "\",\""));
-            divProjetos.innerHTML = "<p>Arquivos do projeto:</p><br><button onClick=\"voltarUmaPasta()\">voltar...</button><br>";
-            const pasta = document.createElement("div");
+            divProjetos.innerHTML = "<p>Arquivos do projeto:</p><br><button onClick=\"voltarUmaPasta()\">voltar...</button><button onClick=\"ativarDeletar()\">deletar</button><br>";
             listaArquivos.forEach(arquivo => {
+              const dir = document.createElement("div");
               const pasta = document.createElement("div");
+              pasta.id = "pasta";
               const texto = document.createElement("div");
               texto.textContent = arquivo;
               texto.style.cursor = "pointer";
-              texto.style.margin = "5px";
+              texto.style.margin = "10px";
               pasta.onclick = () => {
                   if(Android.ehDir(arquivo)) caminho += arquivo + "/";
                   else {
@@ -272,7 +287,17 @@ function atualizar() {
                   atualizar();
               };
               pasta.appendChild(texto);
-              divProjetos.appendChild(pasta);
+              if(modoDelete) {
+                  const deletarBt = document.createElement("button");
+                  deletarBt.textContent = "Deletar";
+                  deletarBt.onclick = () => {
+                      Android.deletar(caminho);
+                      atualizar();
+                  };
+                  pasta.appendChild(deletarBt);
+              }
+              dir.appendChild(pasta);
+              divProjetos.appendChild(dir);
             });
         } catch(e) {
           document.getElementById("console").innerHTML += "Erro ao carregar projetos: " + e.message;
@@ -292,9 +317,19 @@ function voltarCasa() {
     Android.pacoteSub();
     engine.mudarTela("../inicio.html");
 }
+function ativarDeletar() {
+    if(modoDelete) modoDelete = false;
+    else modoDelete = true;
+    atualizar();
+}
+function reiniciar() {
+    Android.msg("Pagina recarregando...");
+    location.reload(true);
+}
 document.getElementById("nomeArquivo").value = "jogo.js";
 editor.setValue("const b = {\n  x: 0, y: 0,\n  escalaX: 60, escalaY: 60,\n  cor: \"blue\", click: () => console.log(\"teste\")\n};\nengine.addBotao(b);", -1);
 atualizar();
+Android.msg("Pagina carregada");
 abrir();
 </script>
   </body>

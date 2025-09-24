@@ -11,9 +11,8 @@ class Engine {
     this.ctx = this.canvas.getContext("2d");
     this.ctx.imageSmoothingEnabled = false;
     this.texto = [];
-    this.camada = [];
     this.camadas = [];
-    this.camadas.push(this.camada);
+    this.camada = this.novaCamada("padrao", 0);
     this.renderizacao = renderAutomatico;
     this.tamPadrao = 32;
     this.camera;
@@ -23,23 +22,45 @@ class Engine {
     if(canvasCompleto) this.ajustarTela();
   }
   
-  obterCoordGlobal(e) {
+  obterCoordGlobal(e, estatica = false) {
     const toque = e.touches[0];
     const rect = this.canvas.getBoundingClientRect();
-    const x = toque.clientX - rect.left;
-    const y = toque.clientY - rect.top;
+    let x = toque.clientX - rect.left;
+    let y = toque.clientY - rect.top;
 
     if(this.zoom) {
-      const mundoX = (x - this.zoom.panX) / this.zoom.escala;
-      const mundoY = (y - this.zoom.panY) / this.zoom.escala;
-      return { x: mundoX, y: mundoY };
+      x = (x - this.zoom.panX) / this.zoom.escala;
+      y = (y - this.zoom.panY) / this.zoom.escala;
+    }
+
+    if(this.camera && !estatica) {
+      x += this.camera.x;
+      y += this.camera.y;
     }
     return { x, y };
   }
   
-  novaCamada(renderizarAutomatico=true) {
-    const camada = [];
+  obterCamada(nome) {
+    return this.camadas.find(c => c.nome == nome);
+  }
+  
+  obterCamadaTopo() {
+    let maisAlta = {nivel: 0};
+    for(let i = 0; i < this.camadas.length; i++) {
+      if(this.camadas[i].nivel >= maisAlta.nivel) maisAlta = this.camadas[i];
+    }
+    return maisAlta;
+  }
+  
+  novaCamada(nome="camada "+this.obterCamadaTopo().nivel, nivel=this.camadas.length, estatica=false, renderizarAutomatico=true) {
+    const camada = {
+      nome: nome, nivel: nivel, sprites: [],
+      estatica: estatica, push(objeto) {this.sprites.push(objeto);}
+    };
     this.camadas.push(camada);
+    this.camadas.sort(function(a, b) {
+      return a.nivel - b.nivel;
+    });
     return camada;
   }
   
@@ -57,13 +78,11 @@ class Engine {
   }
   
   rm(sprite, camada=this.camada) {
-    const i = camada.indexOf(sprite);
-    if(i !== -1) {
-      camada.splice(i, 1);
-    }
+    const i = camada.sprites.indexOf(sprite);
+    if(i != -1) camada.sprites.splice(i, 1);
   }
   
-  rodarAnimacao(alvo=Sprite, animacao=[], repetir=1, intervalo=0.5, inicio=0) {
+  rodarAnimacao(alvo, animacao=[], repetir=1, intervalo=0.5, inicio=0) {
     let frame = inicio;
     alvo.imagem.src = animacao[frame];
     frame++;
@@ -82,28 +101,38 @@ class Engine {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
     if(this.zoom && !this.zoom.ctx) this.zoom.ctx = this.ctx;
-    if(this.zoom) this.zoom.aplicarTransformacao();
-    if(this.camera) this.camera.att();
+    if(this.zoom) this.zoom.aplicar();
 
     for(const camada of this.camadas) {
-      for(const sprite of camada) {
+      this.ctx.save();
+
+      if(this.camera && !camada.estatica) this.camera.att();
+      
+      for(const sprite of camada.sprites) {
         try {
           if(sprite.sx != null  && sprite.imagem.complete) {
+              this.ctx.globalAlpha = sprite.alfa;
               this.ctx.drawImage(
                 sprite.imagem,
                 sprite.sx, sprite.sy, sprite.sEX, sprite.sEY,
                 sprite.x, sprite.y, sprite.escalaX, sprite.escalaY);
+              this.ctx.globalAlpha = 1;
             } else if(sprite.imagem != null && sprite.imagem.complete) {
+              this.ctx.globalAlpha = sprite.alfa;
               this.ctx.drawImage(
                 sprite.imagem,
                 sprite.x, sprite.y,
                 sprite.escalaX, sprite.escalaY);
+              this.ctx.globalAlpha = 1;
             } else if(sprite.cor != null && sprite.texto == null) {
+              this.ctx.globalAlpha = sprite.alfa;
               this.ctx.fillStyle = sprite.cor;
               this.ctx.fillRect(
                 sprite.x, sprite.y,
                 sprite.escalaX, sprite.escalaY);
+              this.ctx.globalAlpha = 1;
             } else if(sprite.texto) {
+              this.ctx.globalAlpha = sprite.alfa;
               if(sprite.texto.includes("\n")) {
                 const array = sprite.texto.split("\n");
                 for(let i = 0; i < array.length; i++) {
@@ -122,9 +151,12 @@ class Engine {
                   sprite.x, sprite.y,
                   sprite.escalaX, sprite.escalaY);
               }
+              this.ctx.globalAlpha = 1;
             } else if(sprite instanceof Particula) {
+              this.ctx.globalAlpha = sprite.alfa;
               sprite.desenhar(this.ctx);
               sprite.atualizar(this.canvas.width, this.canvas.height);
+              this.ctx.globalAlpha = 1;
             }
         } catch(err) {
           if(err instanceof DOMException) {
@@ -135,9 +167,10 @@ class Engine {
           } else throw err;
         }
       }
+      this.ctx.restore();
     }
     this.ctx.restore();
-    requestAnimationFrame(() => this.renderizar());
+    if(this.renderizacao) requestAnimationFrame(() => this.renderizar());
   }
   
   solido(s1, s2, elasticidade=0.8, atrito=0.3) {
@@ -203,7 +236,7 @@ class Engine {
     if(sprite.click) {
       this.canvas.addEventListener('touchstart', (evento) => {
         evento.preventDefault();
-        const coords = this.obterCoordGlobal(evento);
+        const coords = this.obterCoordGlobal(evento, camada.estatica);
         
         if(
           coords.x >= sprite.x &&
@@ -217,14 +250,13 @@ class Engine {
     if(sprite.pressionado) {
       this.canvas.addEventListener('touchstart', (evento) => {
         evento.preventDefault();
-        const coords = this.obterCoordGlobal(evento);
+        const coords = this.obterCoordGlobal(evento, camada.estatica);
         
         if(
           coords.x >= sprite.x &&
           coords.x <= sprite.x + sprite.escalaX &&
           coords.y >= sprite.y &&
-          coords.y <= sprite.y + sprite.escalaY
-          ) {
+          coords.y <= sprite.y + sprite.escalaY) {
             pressionado = true;
             
             loop(sprite.pressionado);
@@ -335,8 +367,7 @@ class Engine {
   
   limpar() {
     this.camadas = [];
-    this.camada = [];
-    this.camadas.push(this.camada);
+    this.camada = this.novaCamada("padrao", 0);
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
   }
   
@@ -356,6 +387,22 @@ class Sprite {
     this.y = y;
     this.escalaX = escalaX;
     this.escalaY = escalaY;
+    this.alfa = 1;
+  }
+}
+
+class Camera {
+  constructor(engine, foco) {
+    this.engine = engine;
+    this.foco = foco;
+    this.x = 0;
+    this.y = 0;
+  }
+
+  att() {
+    this.x = this.foco.x - (this.engine.canvas.width / 2 - this.foco.escalaX / 2);
+    this.y = this.foco.y - (this.engine.canvas.height / 2 - this.foco.escalaY / 2);
+    this.engine.ctx.translate(-this.x, -this.y);
   }
 }
 
@@ -471,28 +518,10 @@ class ArrastavelHtml {
     }
 }
 
-class Camera {
-  constructor(engine, foco, camada) {
-    this.engine = engine;
-    this.camada = camada;
-    this.foco = foco;
-  }
-  
-  att() {
-    const ultimoX = this.foco.x - (this.engine.canvas.width / 2 - this.foco.escalaX / 2);
-    const ultimoY = this.foco.y - (this.engine.canvas.height / 2 - this.foco.escalaY / 2);
-    
-    for(let i=0; i<this.camada.length; i++) {
-      this.camada[i].x = this.camada[i].x - ultimoX;
-      this.camada[i].y = this.camada[i].y - ultimoY;
-    }
-  }
-}
-
 class EditorMapas {
     constructor(tilesImgId="tiles", canvasId="telaJogo") {
         if(canvasId instanceof Engine) this.engine = canvasId
-        else this.engine = new Engine(canvasId, false);
+        else this.engine = new Engine(canvasId, false, false);
         this.modo = "desenhar";
         this.camadaAtual = 0;
         this.tileSelecionado = { x: 0, y: 0 };
@@ -683,11 +712,13 @@ class EditorMapas {
         lista.innerHTML = "";
         
         for(let i = 0; i < this.engine.camadas.length; i++) {
-          const btn = document.createElement("button");
-          btn.textContent = `Camada ${i} ${i === this.camadaAtual ? "(Ativa)" : ""}`;
-          btn.addEventListener("click", () => this.selecionarCamada(i));
-          lista.appendChild(btn);
+          const bt = document.createElement("button");
+          bt.textContent = `Camada ${this.engine.camadas[i].nome} ${i === this.camadaAtual ? "(Ativa)" : ""}`;
+          bt.addEventListener("click", () => this.selecionarCamada(i));
+          lista.appendChild(bt);
         }
+        document.getElementById("nomeCamada").value = this.engine.camadas[this.camadaAtual].nome;
+        document.getElementById("nivelCamada").value = this.engine.camadas[this.camadaAtual].nivel;
       }
       
       salvarMapa() {
@@ -697,7 +728,8 @@ class EditorMapas {
           camadas: []
         };
         for(let c = 0; c < this.mapaTiles.length; c++) {
-          const camada = [];
+          const ca = this.engine.camadas[c];
+          const camada = {nome: ca.nome, nivel: ca.nivel, estatica: ca.estatica, sprites: []};
           for(let y = 0; y < this.mapaTiles[c].length; y++) {
             const linha = [];
             for(let x = 0; x < this.mapaTiles[c][y].length; x++) {
@@ -709,7 +741,7 @@ class EditorMapas {
                 });
               } else linha.push(null);
             }
-            camada.push(linha);
+            camada.sprites.push(linha);
           }
           dadosMapa.camadas.push(camada);
         }
@@ -730,14 +762,14 @@ class EditorMapas {
           
           for(let c = 0; c < dadosMapa.camadas.length; c++) {
             const camadaDados = dadosMapa.camadas[c];
-            const camada = c === 0 ? this.engine.camada : this.engine.novaCamada();
+            const camada = c === 0 ? this.engine.camada : this.engine.novaCamada(camadaDados.nome, camadaDados.nivel, camadaDados.estatica);
             
-            this.mapaTiles[c] = Array.from({ length: camadaDados.length }, () => 
-              Array.from({ length: camadaDados[0].length }, () => null)
+            this.mapaTiles[c] = Array.from({ length: camadaDados.sprites.length }, () => 
+              Array.from({ length: camadaDados.sprites[0].length }, () => null)
             );
-            for(let y = 0; y < camadaDados.length; y++) {
-              for(let x = 0; x < camadaDados[y].length; x++) {
-                const tileDados = camadaDados[y][x];
+            for(let y = 0; y < camadaDados.sprites.length; y++) {
+              for(let x = 0; x < camadaDados.sprites[y].length; x++) {
+                const tileDados = camadaDados.sprites[y][x];
                 if(tileDados) {
                   const tile = this.engine.novoSprite(tileset.src, camada);
                   tile.x = x * this.tamanhoTile;
@@ -786,7 +818,7 @@ class Zoom {
         }
     }
 
-    aplicarTransformacao() {
+    aplicar() {
         if(!this.ctx) return;
         this.ctx.setTransform(1, 0, 0, 1, 0, 0);
         this.ctx.translate(this.panX, this.panY);
@@ -794,6 +826,7 @@ class Zoom {
     }
 
     aoIniciar(e) {
+       this.renderizar = false;
         e.preventDefault();
         const rect = this.canvas.getBoundingClientRect();
         if(e.touches.length === 1) {
@@ -858,6 +891,7 @@ class Zoom {
             }
             this.distAnterior = distAtual;
         }
+        this.renderizar = true;
     }
 
     noFim() {

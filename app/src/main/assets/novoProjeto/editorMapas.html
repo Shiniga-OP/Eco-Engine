@@ -89,6 +89,8 @@
   <!-- controles de camada -->
   <div id="camadaControles">
     <h3>Camadas</h3>
+    <input id="nomeCamada" type="text" placeholder="nome da camada">
+    <input id="nivelCamada" type="text" placeholder="nivel da camada">
     <button id="novaCamada">Nova Camada</button>
     <button id="removerCamada">Remover Camada</button>
     <div id="listaCamadas"></div>
@@ -129,7 +131,18 @@
             editor.selecionarCamada(camada);
           }
         });
-    editor.engine.renderizar();
+        document.getElementById("nomeCamada").addEventListener("change", (e) => {
+            editor.engine.camadas[editor.camadaAtual].nome = document.getElementById("nomeCamada").value;
+            editor.attListaCamadas();
+        });
+        document.getElementById("nivelCamada").addEventListener("change", (e) => {
+            editor.engine.camadas[editor.camadaAtual].nivel = document.getElementById("nivelCamada").value;
+            editor.attListaCamadas();
+            editor.engine.camadas.sort(function(a, b) {
+                return a.nivel - b.nivel;
+            });
+            editor.engine.renderizar();
+        });
     new ArrastavelHtml("tileDiv", 16, false);
     new ArrastavelHtml("camadaControles", 16, false);
     editor.engine.zoom = new Zoom("telaJogo");
@@ -158,6 +171,9 @@
         document.getElementById("multuso").textContent = "✏️";
       }
     }
+    editor.engine.sempreExecutar(() => {
+      if(editor.engine.zoom.renderizar) editor.engine.renderizar();
+    });
   </script>
 </body>
 </html>

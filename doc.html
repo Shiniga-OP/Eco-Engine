@@ -165,7 +165,6 @@
             <h1>Eco-Engine</h1>
             <h2>(Documentação)</h2>
             <p class="linha-marcada">Game Engine Mobile para criação de jogos 2D em JavaScript</p>
-            <p>Desenvolvida por Shiniga-OP</p>
         </header>
         <div class="sessao">
             <h2>Sobre a Eco-Engine</h2>
@@ -272,6 +271,8 @@
                 &nbsp;&nbsp;<span class="num">60</span>,<span class="coment"> // altura do sprite (opcional)</span><br>);<br>
                 engine.<span class="func">add</span>(player);
             </div>
+        </div>
+        <div class="sessao">
             <!-- botões -->
             <h2>Sobre Botões.</h2>
             <p>Os botões funcionam como as sprites, porém com métodos a mais.</p>
@@ -296,13 +297,22 @@
                 botao.pressionado = () <span class="chave">=></span> player.x += <span class="num">1</span>;<br>
                 engine.<span class="func">addBotao</span>(botao);
             </div>
+        </div>
+        <div class="sessao">
+            <h2>Sobre camadas:</h2>
             <p>Você pode criar camadas com:</p>
             <div class="codigo">
-                <span class="chave">const</span> camada = engine.<span class="func">novaCamada</span>();<br><br>
+                <span class="chave">const</span> camada = engine.<span class="func">novaCamada</span>(<span class="string">"nome"</span>, <span class="num">1</span>, <span class="num">false</span>);<br><br>
                 <span class="coment">// ou:</span><br><br>
-                <span class="chave">const</span> camada = [];<br>
+                <span class="chave">const</span> camada = {<br>
+                &nbsp;&nbsp;nome: <span class="string">"nome"</span>, nivel: <span class="num">1</span>, sprites: [], estatica: <span class="num">false</span>,<br>
+                &nbsp;&nbsp;<span class="func">push</span>(objeto) {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="api">this</span>.sprites.<span class="func">push</span>(objeto);<br>
+                &nbsp;&nbsp;}<br>
+                };<br>
                 engine.camadas.<span class="func">push</span>(camada);
             </div>
+            <p>Se uma camada com o mesmo nome da que você quer criar já exista, ela vai só retornar a camada existente.</p>
             <p>Que retorna um array, onde os objetos serão armazenados. você pode remover com:</p>
             <div class="codigo">
                 engine.<span class="func">rm</span>(camada, engine.camadas);
@@ -311,6 +321,12 @@
             <div class="codigo">
                 engine.<span class="func">rm</span>(player, camada);
             </div>
+            <p>Você pode recuperar camadas pelo nome com:</p>
+            <div class="codigo">
+                <span class="chave">const</span> camada = engine.<span class="func">obterCamada</span>(<span class="string">"nome"</span>);
+            </div>
+        </div>
+        <div class="sessao">
             <h2>Sobre mapas:</h2>
             <p>Para carregar mapas feitos no Editor de Mapas da engine, você precisa do arquivo JSON na pasta do projeto:</p>
             <div class="codigo">
