@@ -81,7 +81,7 @@
     <div id="novoTela">
       <div>
         <h3>Nome do projeto</h3>
-        <p>Versão da engine: 0.0.1</p>
+        <p>Versão da engine: 0.0.2</p>
         <input type="text" placeholder="nome do projeto" id="nomeProjeto">
       </div>
       <button onclick="confirmarNovo()">Ok</button>
@@ -147,7 +147,7 @@
       function abrirProjeto(nomeProjeto) {
         atualizar();
         Android.pacoteAdd(nomeProjeto);
-        window.location.href = nomeProjeto+"/index.html";
+        window.location.href = nomeProjeto+"/interface.html";
       }
       function ativarExclusao() {
           if(!exclusao) exclusao = true;

@@ -259,12 +259,12 @@
             <p>Você pode criar objetos sprite de duas formas.</p>
             <p>Primeiro e mais facíl:</p>
             <div class="codigo">
-                <span class="chave">const</span> player = engine.<span class="func">novoSprite</span>(<span class="string">"sprites/terra.png"</span>); <span class="coment">// isto cria um sprite e adiciona para rendedização</span>
+                <span class="chave">const</span> player = engine.<span class="func">novoSprite</span>(<span class="string">"sprs/terra.png"</span>); <span class="coment">// isto cria um sprite e adiciona para rendedização</span>
             </div>
             <p>E segundo, mais detalhado:</p>
             <div class="codigo">
                 <span class="chave">const</span> player = <span class="chave">new</span><span class="coment"> Sprite</span>(<br>
-                &nbsp;&nbsp;<span class="string">"sprites/terra.png"</span>,<span class="coment"> // caminho do sprite</span><br>
+                &nbsp;&nbsp;<span class="string">"sprs/terra.png"</span>,<span class="coment"> // caminho do sprite</span><br>
                 &nbsp;&nbsp;<span class="num">100</span>,<span class="coment"> // posição X do sprite (opcional)</span><br>
                 &nbsp;&nbsp;<span class="num">100</span>,<span class="coment"> // posição Y do sprite (opcional)</span><br>
                 &nbsp;&nbsp;<span class="num">60</span>,<span class="coment"> // largura do sprite (opcional)</span><br>
@@ -312,7 +312,10 @@
                 };<br>
                 engine.camadas.<span class="func">push</span>(camada);
             </div>
-            <p>Se uma camada com o mesmo nome da que você quer criar já exista, ela vai só retornar a camada existente.</p>
+            <p>Se uma camada com o mesmo nome da que você quer criar já exista, ela pode ser substituida, mas se o nivel for diferente, existirão duas camadas com o mesmo nome, e talvez vpcê precise buscá-la com:</p>
+            <div class="codigo">
+                <span class="chave">const</span> camada = engine.camadas.<span class="func">find</span>(c <span class="chave">=></span> c.nivel == <span class="num">1</span>); <span class="coment">// 1 é o nivel da camada que você quer obter</span> 
+            </div>
             <p>Que retorna um array, onde os objetos serão armazenados. você pode remover com:</p>
             <div class="codigo">
                 engine.<span class="func">rm</span>(camada, engine.camadas);
@@ -338,10 +341,23 @@
                 <span class="chave">const</span> mapa = <span class="coment">Android</span>.<span class="func">ler</span>(<span class="string">"mapa.json"</span>); <span class="coment">// recupere o conteúdo do JSON</span><br>
                 editor.<span class="func">carregarMapa</span>(mapa); <span class="coment">// carregue o mapa</span>
             </div>
+            <p>Lembre-se de que mapas feitos com imagens no projeto tem seus caminhos gravados no JSON. Caso o mapa seja usado em outro lugar com um caminho diferente de imagem, é necessário mudá-lo manualmente.</p>
+        </div>
+        <div class="sessao">
+            <h2>Sobre Camêra:</h2>
+            <p>Para criar uma câmera que apenas segue o jogador, você pode apenas fazer:</p>
+            <div class="codigo">
+                engine.camera = <span class="chave">new</span> <span class="coment">Camera</span>(engine, player);
+            </div>
+            <p>Apenas isso já é o suficiente para criar uma câmera que segue o objeto player.</p>
+            <p>Lembre-se de manter seus botões e interfaces em uma camada estática para não ser afetada pela câmera, exemplo:</p>
+            <div class="codigo">
+                engine.<span class="func">novaCamada</span>(<span class="string">"interface"</span>, <span class="num">1</span>, <span class="num">true</span>);
+            </div>
         </div>
         <footer>
             <p>Eco-Engine &copy; 2025 - Desenvolvido por Shiniga-OP</p>
-            <p>JavaScript • HTML • Java</p>
+            <p>JavaScript • Java</p>
         </footer>
     </div>
 </body>

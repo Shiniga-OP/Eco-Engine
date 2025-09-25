@@ -26,6 +26,7 @@ import android.webkit.ConsoleMessage;
 import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import java.util.ArrayList;
+import android.webkit.WebSettings;
 
 public class MainActivity extends Activity {
     public static WebView tela;
@@ -78,6 +79,9 @@ public class MainActivity extends Activity {
 		tela.getSettings().setAllowFileAccess(true);
 		tela.getSettings().setAllowContentAccess(true);
 		tela.getSettings().setSupportZoom(true);
+		tela.getSettings().setCacheMode(WebSettings.LOAD_NO_CACHE);
+		tela.clearCache(true);
+		
 		if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
 			tela.setWebContentsDebuggingEnabled(true);
 		}

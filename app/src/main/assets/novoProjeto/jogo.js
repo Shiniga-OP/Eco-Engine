@@ -1,4 +1,4 @@
-const camBotoes = engine.novaCamada();
+const camBotoes = engine.novaCamada("ui", 1, true); // camada estática pra interface
 
 function gerar() {
     const blocos = [];
@@ -12,10 +12,11 @@ function gerar() {
         for(let y=altura; y<500; y += grade) {
             let sprite;
             if(y<=altura) {
-                sprite = engine.add(new Sprite("sprites/grama.png", x, y, grade, grade));
+                sprite = engine.add(new Sprite("sprs/grama.png", x, y, grade, grade));
             } else {
-                sprite = engine.add(new Sprite("sprites/terra.png", x, y, grade, grade));
+                sprite = engine.add(new Sprite("sprs/terra.png", x, y, grade, grade));
             }
+            // inicia a velocidade de movimento para colisão:
             sprite.vx = 1;
             sprite.vy = 1;
             blocos.push(sprite);
@@ -24,15 +25,17 @@ function gerar() {
     return blocos;
 }
 
-const player = engine.add(new Sprite("sprites/grama.png", 0, 0, 32, 32));
+const player = engine.add(new Sprite("sprs/grama.png", 0, 0, 32, 32));
+// velocidade de movimento
 player.vx = 1;
 player.vy = 1;
 
 const gra = new Gravidade(player);
-const blocos = gerar();
+const blocos = gerar(); // recupera os blocos gerados
 
-engine.camera = new Camera(engine, player, engine.camada);
+engine.camera = new Camera(engine, player);
 
+// inicializa a colisão:
 engine.sempreExecutar(() => {
     for(let i=0; i<blocos.length; i++) {
         if(engine.solido(player, blocos[i])) {
@@ -41,19 +44,20 @@ engine.sempreExecutar(() => {
     }
 });
 
-const btDireita = new Sprite("sprites/direita.png", 100, 0, 64, 64);
+// botões de interação:
+const btDireita = new Sprite("sprs/direita.png", 100, 0, 64, 64);
 btDireita.pressionado = () => {
     player.x += 1;
 };
 engine.addBotao(btDireita, camBotoes);
 
-const btEsquerda = new Sprite("sprites/esquerda.png", 30, 0, 64, 64);
+const btEsquerda = new Sprite("sprs/esquerda.png", 30, 0, 64, 64);
 btEsquerda.pressionado = () => {
     player.x -= 1;
 };
 engine.addBotao(btEsquerda, camBotoes);
 
-const btCima = new Sprite("sprites/cima.png", 30, 64, 64, 64);
+const btCima = new Sprite("sprs/cima.png", 30, 64, 64, 64);
 btCima.pressionado = ()  => {
     let c = 0;
     for(let i=0; i<10000; i++) {
@@ -64,4 +68,3 @@ btCima.pressionado = ()  => {
     gra.estado = true;
 };
 engine.addBotao(btCima, camBotoes);
-
