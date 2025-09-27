@@ -77,8 +77,7 @@ function iniciar() {
   eco.sempreExecutar(() => {
     for(let i = 0; i < itens.sprites.length; i++) {
       if(eco.solido(player, itens.sprites[i], 1, 0)) {
-        Android.pararAudio("item");
-        Android.tocarAudio("item", "sons/item.wav", false);
+        eco.audio.coletavel(1);
         eco.rm(itens.sprites[i], itens);
         pontos += 1;
         if(pontos >= total) ganhou(pontos, total);
@@ -91,6 +90,7 @@ function iniciar() {
 function ganhou(pontos, tam) {
   eco.novoTexto("você ganhou");
   console.log("pontos: "+pontos+", itens: "+tam);
+  eco.audio.ruidoBranco(5);
 }
 
 iniciar();

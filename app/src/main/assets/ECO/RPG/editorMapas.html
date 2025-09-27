@@ -77,6 +77,11 @@
   <!-- seletor de tiles -->
   <div id="tileDiv">
     <img id="tiles" class="tiles">
+    <div style="display: flex; gap: 5px; margin-top: 10px;">
+        <button id="desfazer" class="botao">↶</button>
+        <button id="refazer" class="botao">↷</button>
+    </div>
+    
     <label>Tileset sprite:</label>
     <input type="text" value="sprs/tileset.png" placeholder="caminho do tileset" class="tiles" id="imgTileset">
     <button id="salvarTile">Salvar Mapa</button>
@@ -97,28 +102,48 @@
   </div>
   <script>
     const editor = new EditorMapas("tiles", "telaJogo");
-    editor.attListaCamadas();
+    let editando = false;
+    attListaCamadas();
+    document.getElementById("desfazer").addEventListener("click", () => editor.desfazer());
+    document.getElementById("refazer").addEventListener("click", () => editor.refazer());
+    
     editor.tilesetImg.addEventListener("touchstart", (e) => editor.selecionarTile(e));
+    
         editor.motor.canvas.addEventListener("touchstart", (e) => {
+          if(!editando) {
+              editor.salvarEstado();
+              editando = true;
+          }
           if(editor.modo == "desenhar") editor.addTile(e);
           else if(editor.modo == "apagar") editor.rmTile(e);
           else if(editor.modo == "balde") editor.preencher(e);
         });
         editor.motor.canvas.addEventListener("touchmove", (e) => {
+          editando = true;
           if(editor.modo == "desenhar") editor.addTile(e);
           else if(editor.modo == "apagar") editor.rmTile(e);
         });
-        document.getElementById("novaCamada").addEventListener("click", () => editor.novaCamada());
-        
-        document.getElementById("removerCamada").addEventListener("click", () => editor.rmCamada());
-        
+        editor.motor.canvas.addEventListener("touchend", (e) => {
+            if(editando) {
+                editando = false;
+                editor.salvarEstado();
+            }
+        });
+        document.getElementById("novaCamada").addEventListener("click", () => {
+            editor.novaCamada();
+            attListaCamadas();
+        });
+        document.getElementById("removerCamada").addEventListener("click", () => {
+            editor.rmCamada();
+            attListaCamadas();
+        });
         document.getElementById("salvarTile").addEventListener("click", () => {
           Android.arquivar(document.getElementById("json").value, JSON.stringify(editor.salvarMapa()));
           alert("Mapa salvo");
         });
         document.getElementById("carregarTile").addEventListener("click", () => {
             editor.carregarMapa(Android.ler(document.getElementById("json").value));
-            editor.attListaCamadas();
+            attListaCamadas();
             alert("Mapa carregado");
         });
         document.getElementById("imgTileset").addEventListener("change", (e) => {
@@ -129,15 +154,16 @@
           const camada = parseInt(e.target.value);
           if(camada >= 0 && camada < editor.motor.camadas.length) {
             editor.selecionarCamada(camada);
+            attListaCamadas();
           }
         });
         document.getElementById("nomeCamada").addEventListener("change", (e) => {
             editor.motor.camadas[editor.camadaAtual].nome = document.getElementById("nomeCamada").value;
-            editor.attListaCamadas();
+            attListaCamadas();
         });
         document.getElementById("nivelCamada").addEventListener("change", (e) => {
             editor.motor.camadas[editor.camadaAtual].nivel = document.getElementById("nivelCamada").value;
-            editor.attListaCamadas();
+            attListaCamadas();
             editor.motor.camadas.sort(function(a, b) {
                 return a.nivel - b.nivel;
             });
@@ -147,6 +173,23 @@
     new ArrastavelHtml("camadaControles", 16, false);
     editor.motor.zoom = new Zoom("telaJogo");
     editor.motor.zoom.ativo = false;
+    
+    function attListaCamadas() {
+        const lista = document.getElementById("listaCamadas");
+        lista.innerHTML = "";
+        
+        for(let i = 0; i < editor.motor.camadas.length; i++) {
+          const bt = document.createElement("button");
+          bt.textContent = `Camada ${editor.motor.camadas[i].nome} ${i === editor.camadaAtual ? "(Ativa)" : ""}`;
+          bt.addEventListener("click", () => {
+              editor.selecionarCamada(i);
+              attListaCamadas();
+          });
+          lista.appendChild(bt);
+        }
+        document.getElementById("nomeCamada").value = editor.motor.camadas[editor.camadaAtual].nome;
+        document.getElementById("nivelCamada").value = editor.motor.camadas[editor.camadaAtual].nivel;
+      }
     
     function ativar() {
       if(editor.modo == "desenhar") {

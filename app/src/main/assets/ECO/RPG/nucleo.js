@@ -17,6 +17,7 @@ class Motor {
     this.tamPadrao = 32;
     this.camera;
     this.zoom;
+    this.audio = new EcoAudio();
     
     if(this.renderizacao) this.renderizar();
     if(canvasCompleto) this.ajustarTela();
@@ -240,55 +241,50 @@ class Motor {
     const sprite = new Sprite(caminho);
     this.addBotao(sprite, camada);
   }
-    
+
   addBotao(sprite, camada=this.camada) {
-    let pressionado = false;
-    if(sprite.click) {
-      this.canvas.addEventListener('touchstart', (evento) => {
+    const toquesAtivos = new Set();
+    let loopRodando = false;
+
+    const loopPressionado = () => {
+        if(toquesAtivos.size > 0 && sprite.pressionado) {
+            sprite.pressionado();
+            requestAnimationFrame(loopPressionado);
+        } else {
+            loopRodando = false; 
+            if(sprite.noFim) sprite.noFim();
+        }
+    };
+    this.canvas.addEventListener('touchstart', (evento) => {
         evento.preventDefault();
-        const coords = this.obterCoordGlobal(evento, camada.estatica);
-        
-        if(
-          coords.x >= sprite.x &&
-          coords.x <= sprite.x + sprite.escalaX &&
-          coords.y >= sprite.y &&
-          coords.y <= sprite.y + sprite.escalaY) {
-            sprite.click(evento);
-          }
-      });
-    }
-    if(sprite.pressionado) {
-      this.canvas.addEventListener('touchstart', (evento) => {
-        evento.preventDefault();
-        const coords = this.obterCoordGlobal(evento, camada.estatica);
-        
-        if(
-          coords.x >= sprite.x &&
-          coords.x <= sprite.x + sprite.escalaX &&
-          coords.y >= sprite.y &&
-          coords.y <= sprite.y + sprite.escalaY) {
-            pressionado = true;
-            
-            loop(sprite.pressionado);
-            
-            function loop(funcao) {
-              setTimeout(() => {
-                if(pressionado) {
-                  funcao();
-                  requestAnimationFrame(() => loop(funcao));
+        for(let t of evento.changedTouches) {
+            const coords = this.obterCoordGlobal({ touches: [t] }, camada.estatica);
+
+            if(coords.x >= sprite.x && coords.x <= sprite.x + sprite.escalaX && 
+                coords.y >= sprite.y && coords.y <= sprite.y + sprite.escalaY) {
+                toquesAtivos.add(t.identifier); 
+                
+                if(sprite.click) sprite.click(evento);
+                
+                if(sprite.pressionado && !loopRodando) {
+                    loopRodando = true;
+                    loopPressionado();
                 }
-              });
             }
-          }
-      });
-    }
-    this.canvas.addEventListener('touchend', (evento) => {
-      pressionado = false;
-      if(sprite.noFim) sprite.noFim();
+        }
     });
+    const aoTerminarToque = (evento) => {
+        for(let t of evento.changedTouches) {
+            toquesAtivos.delete(t.identifier);
+        }
+    }
+    this.canvas.addEventListener('touchend', aoTerminarToque);
+    this.canvas.addEventListener('touchcancel', aoTerminarToque); 
+    
     camada.push(sprite);
     return sprite;
   }
+  
   
   ajustarTela(escalaX="100%", escalaY="100%") {
     document.documentElement.style.margin = 0;
@@ -409,24 +405,6 @@ class Camera {
   }
 }
 
-class Gravidade {
-  constructor(objeto, forca=5, estado=true) {
-    this.objeto = objeto;
-    this.forca = forca;
-    this.gradiante = 0.01;
-    this.c = 0;
-    this.limite = 10;
-    this.estado = estado;
-    this.iniciar();
-  }
-  
-  iniciar() {
-    this.objeto.y += this.c;
-    if(this.c<=this.limite && this.estado==true) this.c += this.gradiante * this.forca;
-    requestAnimationFrame(() => this.iniciar())
-  }
-}
-
 class Particula {
     constructor(cor, caminho, x=0, y=0, escalaX=32, escalaY=32) {
         this.cor = cor;
@@ -538,6 +516,11 @@ class EditorMapas {
         
         this.iniciarTileset();
         this.iniciarMapa(40, 30);
+        
+        this.historico = [];
+        this.passoAtual = -1;
+        this.limiteHistorico = 50;
+        this.salvarEstado();
       }
       
       iniciarTileset() {
@@ -560,6 +543,46 @@ class EditorMapas {
         }
       }
       
+      salvarEstado() {
+          if(this.passoAtual < this.historico.length - 1) {
+              this.historico = this.historico.slice(0, this.passoAtual + 1);
+          }
+          const estado = JSON.stringify(this.salvarMapa());
+          this.historico.push(estado);
+          this.passoAtual++;
+          
+          if(this.historico.length > this.limiteHistorico) {
+              this.historico.shift();
+              this.passoAtual--;
+          }
+      }
+      
+      desfazer() {
+          if(this.passoAtual > 1) {
+              this.passoAtual--;
+              this.carregarEstado(this.historico[this.passoAtual]);
+              return true;
+          }
+          return false;
+      }
+      
+      refazer() {
+          if(this.passoAtual < this.historico.length - 1) {
+              this.passoAtual++;
+              this.carregarEstado(this.historico[this.passoAtual]);
+              return true;
+          }
+          return false;
+      }
+      
+      carregarEstado(estadoJson) {
+          try {
+              this.carregarMapa(estadoJson);
+          } catch(e) {
+              console.error("Erro ao carregar estado:", e);
+          }
+      }
+      
       selecionarTile(e) {
         const rect = this.tilesetImg.getBoundingClientRect();
         const escalaX = this.tilesetImg.naturalWidth / rect.width;
@@ -570,6 +593,54 @@ class EditorMapas {
         const x = Math.floor(px / this.tamanhoTile);
         const y = Math.floor(py / this.tamanhoTile);
         this.tileSelecionado = { x, y };
+      }
+      
+      addTile(e) {
+        if(this.modo != "desenhar" || !this.ativo) return;
+        
+        const coords = this.motor.obterCoordGlobal(e);
+        const x = Math.floor(coords.x / this.tamanhoTile);
+        const y = Math.floor(coords.y / this.tamanhoTile);
+        
+        if(x < 0 || y < 0 || x >= this.mapaTiles[0][0].length || y >= this.mapaTiles[0].length) return;
+        
+        const tileExistente = this.mapaTiles[this.camadaAtual][y][x];
+        if(tileExistente) this.motor.rm(tileExistente, this.motor.camadas[this.camadaAtual]);
+        
+        const novoTile = this.motor.novoSprite(
+          this.tilesetImg.src,
+          this.motor.camadas[this.camadaAtual]);
+        novoTile.x = x * this.tamanhoTile;
+        novoTile.y = y * this.tamanhoTile;
+        novoTile.escalaX = this.tamanhoTile;
+        novoTile.escalaY = this.tamanhoTile;
+        
+        novoTile.imagem = this.tilesetImg;
+        novoTile.sx = this.tileSelecionado.x * this.tamanhoTile;
+        novoTile.sy = this.tileSelecionado.y * this.tamanhoTile;
+        novoTile.sEX = this.tamanhoTile;
+        novoTile.sEY = this.tamanhoTile;
+        
+        this.mapaTiles[this.camadaAtual][y][x] = novoTile;
+        
+        this.motor.renderizar();
+      }
+      
+      rmTile(e) {
+        if(this.modo != "apagar" || !this.ativo) return;
+        
+        const coords = this.motor.obterCoordGlobal(e);
+        const x = Math.floor(coords.x / this.tamanhoTile);
+        const y = Math.floor(coords.y / this.tamanhoTile);
+        
+        if(x < 0 || y < 0 || x >= this.mapaTiles[0][0].length || y >= this.mapaTiles[0].length) return;
+
+        const tile = this.mapaTiles[this.camadaAtual][y][x];
+        if(tile) {
+          this.motor.rm(tile, this.motor.camadas[this.camadaAtual]);
+          this.mapaTiles[this.camadaAtual][y][x] = null;
+        }
+        this.motor.renderizar();
       }
       
       preencher(e) {
@@ -629,54 +700,6 @@ class EditorMapas {
           }
       }
       
-      addTile(e) {
-        if(this.modo != "desenhar" || !this.ativo) return;
-        
-        const coords = this.motor.obterCoordGlobal(e);
-        const x = Math.floor(coords.x / this.tamanhoTile);
-        const y = Math.floor(coords.y / this.tamanhoTile);
-        
-        if(x < 0 || y < 0 || x >= this.mapaTiles[0][0].length || y >= this.mapaTiles[0].length) return;
-        
-        const tileExistente = this.mapaTiles[this.camadaAtual][y][x];
-        if(tileExistente) this.motor.rm(tileExistente, this.motor.camadas[this.camadaAtual]);
-        
-        const novoTile = this.motor.novoSprite(
-          this.tilesetImg.src,
-          this.motor.camadas[this.camadaAtual]);
-        novoTile.x = x * this.tamanhoTile;
-        novoTile.y = y * this.tamanhoTile;
-        novoTile.escalaX = this.tamanhoTile;
-        novoTile.escalaY = this.tamanhoTile;
-        
-        novoTile.imagem = this.tilesetImg;
-        novoTile.sx = this.tileSelecionado.x * this.tamanhoTile;
-        novoTile.sy = this.tileSelecionado.y * this.tamanhoTile;
-        novoTile.sEX = this.tamanhoTile;
-        novoTile.sEY = this.tamanhoTile;
-        
-        this.mapaTiles[this.camadaAtual][y][x] = novoTile;
-        
-        this.motor.renderizar();
-      }
-      
-      rmTile(e) {
-        if(this.modo != "apagar" || !this.ativo) return;
-        
-        const coords = this.motor.obterCoordGlobal(e);
-        const x = Math.floor(coords.x / this.tamanhoTile);
-        const y = Math.floor(coords.y / this.tamanhoTile);
-        
-        if(x < 0 || y < 0 || x >= this.mapaTiles[0][0].length || y >= this.mapaTiles[0].length) return;
-
-        const tile = this.mapaTiles[this.camadaAtual][y][x];
-        if(tile) {
-          this.motor.rm(tile, this.motor.camadas[this.camadaAtual]);
-          this.mapaTiles[this.camadaAtual][y][x] = null;
-        }
-        this.motor.renderizar();
-      }
-      
       novaCamada() {
         const camada = this.motor.novaCamada();
         const altura = this.mapaTiles[0].length;
@@ -684,7 +707,6 @@ class EditorMapas {
         this.mapaTiles.push(Array.from({ length: altura }, () => 
           Array.from({ length: largura }, () => null)
         ));
-        this.attListaCamadas();
         return camada;
       }
       
@@ -701,27 +723,11 @@ class EditorMapas {
         
         if(this.camadaAtual >= this.motor.camadas.length) this.camadaAtual = this.motor.camadas.length - 1;
         
-        this.attListaCamadas();
         this.motor.renderizar();
       }
       
       selecionarCamada(indice) {
         this.camadaAtual = indice;
-        this.attListaCamadas();
-      }
-      
-      attListaCamadas() {
-        const lista = document.getElementById("listaCamadas");
-        lista.innerHTML = "";
-        
-        for(let i = 0; i < this.motor.camadas.length; i++) {
-          const bt = document.createElement("button");
-          bt.textContent = `Camada ${this.motor.camadas[i].nome} ${i === this.camadaAtual ? "(Ativa)" : ""}`;
-          bt.addEventListener("click", () => this.selecionarCamada(i));
-          lista.appendChild(bt);
-        }
-        document.getElementById("nomeCamada").value = this.motor.camadas[this.camadaAtual].nome;
-        document.getElementById("nivelCamada").value = this.motor.camadas[this.camadaAtual].nivel;
       }
       
       salvarMapa() {
@@ -901,4 +907,85 @@ class Zoom {
         this.arrastando = false;
         this.distAnterior = 0;
     }
+}
+
+class EcoAudio {
+  constructor() {
+    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    this.osciladores = new Map();
+    this.sons = new Map();
+  }
+  // tom simples
+  gerarTom(frequencia=440, duracao=1, tipo="sine", volume=0.5) {
+    const oscilador = this.ctx.createOscillator();
+    const ganhoNo = this.ctx.createGain();
+
+    oscilador.connect(ganhoNo);
+    ganhoNo.connect(this.ctx.destination);
+
+    oscilador.frequency.value = frequencia;
+    oscilador.type = tipo;
+
+    ganhoNo.gain.value = volume;
+    ganhoNo.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duracao);
+
+    oscilador.start();
+    oscilador.stop(this.ctx.currentTime + duracao);
+
+    return oscilador;
+  }
+  // explosão procedural
+  explosao(duracao=0.5, volume=0.3) {
+    const osc = this.ctx.createOscillator();
+    const gan = this.ctx.createGain();
+
+    osc.connect(gan);
+    gan.connect(this.ctx.destination);
+
+    osc.frequency.setValueAtTime(200, this.ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(0.1, this.ctx.currentTime + duracao);
+
+    gan.gain.value = volume;
+    gan.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duracao);
+
+    osc.start();
+    osc.stop(this.ctx.currentTime + duracao);
+  }
+  // moeda/coletavel
+  coletavel(volume=0.3) {
+    const osc = this.ctx.createOscillator();
+    const gan = this.ctx.createGain();
+
+    osc.connect(gan);
+    gan.connect(this.ctx.destination);
+
+    osc.frequency.setValueAtTime(1000, this.ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(300, this.ctx.currentTime + 0.2);
+
+    gan.gain.value = volume;
+    gan.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.2);
+
+    osc.start();
+    osc.stop(this.ctx.currentTime + 0.2);
+  }
+  // ruído branco(vento, fogo, etc)
+  ruidoBranco(duracao=2, volume=0.1) {
+    const bufferTam = this.ctx.sampleRate * duracao;
+    const buffer = this.ctx.createBuffer(1, bufferTam, this.ctx.sampleRate);
+    const dados = buffer.getChannelData(0);
+
+    for(let i = 0; i < bufferTam; i++) dados[i] = Math.random() * 2 - 1; // -1 a 1
+
+    const fonte = this.ctx.createBufferSource();
+    fonte.buffer = buffer;
+
+    const gan = this.ctx.createGain();
+    gan.gain.value = volume;
+
+    fonte.connect(gan);
+    gan.connect(this.ctx.destination);
+
+    fonte.start();
+    fonte.stop(this.ctx.currentTime + duracao);
+  }
 }

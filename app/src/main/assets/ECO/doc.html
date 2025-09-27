@@ -227,7 +227,7 @@
         </div>
         <div class="sessao">
             <!-- objeto basico -->
-            <h2>Sobre Objetos basicos.</h2>
+            <h2>Sobre Objetos Basicos.</h2>
             <p>Um exemplo simples de como criar um jogo básico com a Eco-Engine:</p>
             <div class="codigo">
                 <span class="chave">const</span> player = {<br>
@@ -287,7 +287,7 @@
             </div>
         </div>
         <div class="sessao">
-            <h2>Sobre camadas:</h2>
+            <h2>Sobre Camadas.</h2>
             <p>Você pode criar camadas com:</p>
             <div class="codigo">
                 <span class="chave">const</span> camada = eco.<span class="func">novaCamada</span>(<span class="string">"nome"</span>, <span class="num">1</span>, <span class="num">false</span>);<br><br>
@@ -318,7 +318,7 @@
             </div>
         </div>
         <div class="sessao">
-            <h2>Sobre mapas:</h2>
+            <h2>Sobre Mapas.</h2>
             <p>Para carregar mapas feitos no Editor de Mapas da engine, você precisa do arquivo JSON na pasta do projeto:</p>
             <div class="codigo">
                 <span class="chave">const</span> mapaImg = <span class="chave">new</span> <span class="coment">Image</span>(); <span class="coment">// imagem usada para construir o mapa</span><br>
@@ -332,7 +332,7 @@
             <p>Lembre-se de que mapas feitos com imagens no projeto tem seus caminhos gravados no JSON. Caso o mapa seja usado em outro lugar com um caminho diferente de imagem, é necessário mudá-lo manualmente.</p>
         </div>
         <div class="sessao">
-            <h2>Sobre Camêra:</h2>
+            <h2>Sobre Camêra.</h2>
             <p>Para criar uma câmera que apenas segue o jogador, você pode apenas fazer:</p>
             <div class="codigo">
                 eco.camera = <span class="chave">new</span> <span class="coment">Camera</span>(eco, player);
@@ -348,9 +348,16 @@
                 eco.canvas.width += <span class="num">250</span>;<br>
                 eco.canvas.height += <span class="num">250</span>;
             </div>
+            <p>Caso você sinta que a câmera está muito afastada do que você quer, também é possivel aplicar um zoom geral com:</p>
+            <div class="codigo">
+                eco.zoom = <span class="chave">new</span> <span class="coment">Zoom</span>(<br>
+                &nbsp;&nbsp;<span class="string">"telaJogo"</span>,<br>
+                &nbsp;&nbsp;<span class="num">1.3</span> <span class="coment">// escala do zoom</span><br>
+                );
+            </div>
         </div>
         <div class="sessao">
-            <h2>Sobre colisão:</h2>
+            <h2>Sobre Colisão.</h2>
             <p>Para colisão, primeiro precisamos configurar algumas coisas sobre os dois (ou mais) objetos sprite que irão colidir.</p>
             <div class="codigo">
                 player.vx = <span class="num">1</span>;<br>
@@ -371,15 +378,43 @@
                 });
             </div>
         </div>
-        <!--
         <div class="sessao">
-            <h2>Sobre animações:</h2>
-            <p>Você pode criar animações manipulando variaveis opcionais do objeto sprite:</p>
+            <h2>Sobre Animações.</h2>
+            <p>Você pode criar animações manipulando variaveis opcionais do objeto sprite.</p>
+            <p>Em casos onde a otimização de tamanho de dados é necessária, você pode reútilizar uma imagem grande com os sprites que quiser, chamamos isso de recorte de sprite:</p>
             <div class="codigo">
-                <span class="chave">const</span> vida = <span class="chave">new</span> <span class="coment">Sprite</span>(<span class="string">"sprs/vida.png"</span>);
-                vida.vx =
+                <span class="chave">const</span> vida = <span class="chave">new</span> <span class="coment">Sprite</span>(<span class="string">"sprs/vida.png"</span>);<br>
+                <span class="coment">// isso são as posições do sprite na imagem grande</span><br>
+                vida.sx = <span class="num">0</span>;<br>
+                vida.sy = <span class="num">0</span>;<br>
+                <span class="coment">// isso é o tamanho do recorte para pegar somente a parte do sprite</span><br>
+                vida.sEX = <span class="num">16</span>;<br>
+                vida.sEY = <span class="num">16</span>;<br>
+                eco.<span class="func">add</span>(vida);<br>
             </div>
-        </div> -->
+            <p>O tamamho "escalaX" e "escalaY" não afetam a área de recorte, a única coisa com que afeta é a dimensão da imagem.</p><br>
+            <p>Como no exemplo mostrado, você pode criar animações assim também, vamos utilizar o sprite padrão da game engine, "vida.png". No exemplo anterior, mostra apenas 1 único coração, mas para exibir dois é muito fácil também:</p>
+            <div class="codigo">
+                vida.sEX = <span class="num">32</span>; <span class="coment">// como o sprite tem 48 pixels de largura e 16 de altura, cada coração ocupa 16 pixels, e 2 corações ocupam 32 pixels</span>
+                vida.escalaX *= <span class="num">2</span>; <span class="coment">// aumenta o tamanho em duas vezes para não distorcer a imagem</span>
+            </div>
+        </div>
+        <div class="sessao">
+            <h2>Sobre Audio:</h2>
+            <p>Dá pra criar sons básicos com a API de áudio da Eco-Engine, e usar sons pré feitos:</p>
+            <div class="codigo">
+                eco.audio.<span class="func">coletavel</span>(<span class="num">0.9</span>); <span class="coment">// volume</span><br><br>
+                eco.audio.<span class="func">explosao</span>(<span class="num">0.3</span>, <span class="num">0.9</span>); <span class="coment">// duração e volume</span><br><br>
+                eco.audio.<span class="func">ruidoBranco</span>(<span class="num">2</span>, <span class="num">0.9</span>); <span class="coment">// duração e volume</span><br><br>
+                <span class="coment">// e para algo mais personalizado:</span><br>
+                eco.audio.<span class="func">gerarTom</span>(<br>
+                &nbsp;&nbsp;<span class="num">440</span>, <span class="coment">// frequencia</span><br>
+                &nbsp;&nbsp;<span class="num">1</span>, <span class="coment">// duração</span><br>
+                &nbsp;&nbsp;<span class="string">"sine"</span>, <span class="coment">// tipo</span><br>
+                &nbsp;&nbsp;<span class="num">0.9</span>, <span class="coment">// volume</span><br>
+                );
+            </div>
+        </div>
         <footer>
             <p>Eco-Engine &copy; 2025 - Desenvolvido por Shiniga-OP</p>
             <p>JavaScript • Java</p>

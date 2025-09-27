@@ -54,6 +54,7 @@ html, body {
 }
 
 .pagina.ativa { display:block; }
+.escondido { display:none; }
 
 #telaJogo {
   border: 1px solid #444;
@@ -93,7 +94,6 @@ html, body {
   </head>
   <body>
 	<div id="barraFerramentas">
-	  <button onClick="location.reload()">Reiniciar</button>
 	  <button onClick="voltarCasa()">Casa</button>
 	  <select id="listaPaginas" onchange="trocarPagina(this.value)">
 		<option value="jogo.html">Jogo</option>
@@ -102,6 +102,7 @@ html, body {
 		<option value="console">Console</option>
 		<option value="editorMapas.html">Editor de mapas</option>
 		<option value="editorMusica.html">Produtor de músicas</option>
+		<option value="../doc.html">Documentação</option>
 	  </select>
 	  <button onclick="abrir()">Abrir</button>
 	  <input id="nomeArquivo" type="text" placeholder="caminho do arquivo">
@@ -110,6 +111,7 @@ html, body {
 	  <button onClick="abrirScripts()">HTML</button>
 	  <button onclick="trocarPaginaB()"><</button>
 	  <button onclick="trocarPaginaP()">></button>
+	  <button onClick="location.reload()" id="reiniciar">Reiniciar</button>
 	</div>
 	<div id="conteudo">
 	  <div id="editorMapas" class="pagina">
@@ -139,6 +141,7 @@ let modoDelete = false;
 let inicio = `<canvas id=\"telaJogo\"></canvas>\n<script>eval(\`\${Android.ler(\"nucleo.js\")}\nconst eco = new Motor(\"telaJogo\");\${Android.ler(\"jogo.js\")}\`);<\/script>\n`;
 let scripts = "";
 if(!dev) {
+    document.getElementById("reiniciar").classList.add("escondido");
     if(Android.ler("jogo.html")=="") Android.arquivar("jogo.html", inicio+scripts);
 }
 const antigoConsoleLog = console.log;
