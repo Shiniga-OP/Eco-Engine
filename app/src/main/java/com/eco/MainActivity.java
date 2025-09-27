@@ -27,6 +27,16 @@ import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import java.util.ArrayList;
 import android.webkit.WebSettings;
+import android.media.MediaPlayer;
+import android.content.res.AssetFileDescriptor;
+import java.util.HashMap;
+import java.util.Map;
+import android.util.Base64;
+import java.io.FileOutputStream;
+import java.nio.file.Files;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.FileWriter;
 
 public class MainActivity extends Activity {
     public static WebView tela;
@@ -37,7 +47,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle s) {
         super.onCreate(s);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.inicio);
 
         tela = findViewById(R.id.tela);
 
@@ -56,7 +66,7 @@ public class MainActivity extends Activity {
 			Toast.makeText(this, "Página inicial carregada", Toast.LENGTH_SHORT).show();
 		} else {
 			Toast.makeText(this, "Página inicial carregando", Toast.LENGTH_SHORT).show();
-			ArquivosUtil.copiarArquivoAssets(this, caminho+"inicio.html", "ECO/inicio.html");
+			ArquivosUtil.copiarPastaAssets(this, caminho, "ECO");
 			if(new File(caminho+"inicio.html").exists()) Toast.makeText(this, "Página inicial carregada", Toast.LENGTH_SHORT).show();
 			else Toast.makeText(this, "ERRO: arquivo inicio.html não achado", Toast.LENGTH_LONG).show();
 		}
@@ -176,11 +186,126 @@ public class MainActivity extends Activity {
 			consoleLogs += String.valueOf(o) + "\n";
 		}
 	}
+	
+	public static class Audio {
+		public static Map<String, MediaPlayer> mps = new HashMap<>();
+		
+		public boolean exportarWAV(String caminho, short[] dados, int taxa) {
+			try {
+				File arquivo = new File(caminho);
+				FileOutputStream fos = new FileOutputStream(arquivo);
+				DataOutputStream dos = new DataOutputStream(fos);
 
+				escreverCabWAV(dos, dados.length, taxa);
+
+				for(short exemplo : dados) dos.writeShort(exemplo);
+
+				dos.close();
+				return true;
+			} catch (Exception e) {
+				System.out.println("Erro ao exportar WAV: " + e);
+				return false;
+			}
+		}
+
+		public void escreverCabWAV(DataOutputStream dos, int dadosTam, int taxa) throws IOException {
+			dos.writeBytes("RIFF");
+			dos.writeInt(36 + dadosTam * 2);
+			dos.writeBytes("WAVE");
+
+			dos.writeBytes("fmt ");
+			dos.writeInt(16);
+			dos.writeShort(1);
+			dos.writeShort(1);
+			dos.writeInt(taxa);
+			dos.writeInt(taxa * 2);
+			dos.writeShort(2);
+			dos.writeShort(16);
+
+			dos.writeBytes("data");
+			dos.writeInt(dadosTam * 2);
+		}
+		
+		public static MediaPlayer tocarMusica(String nome, String caminho, boolean loop) {
+			try {
+				MediaPlayer mp = new MediaPlayer();
+				mp.setDataSource(caminho);
+				mp.setLooping(loop);
+				mp.prepare();
+				mp.start();
+				mps.put(nome, mp);
+				return mp;
+			} catch(Exception e) {
+				System.out.println("erro: " + e);
+				return null;
+			}
+		}
+		
+		public static MediaPlayer tocarMusica(Context ctx, String nome, String caminho, boolean loop) {
+			AssetFileDescriptor afd = null;
+			try {
+				afd = ctx.getAssets().openFd(caminho);
+				MediaPlayer mp = new MediaPlayer();
+				mp.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
+				mp.setLooping(loop);
+				mp.prepare();
+				mp.start();
+				mps.put(nome, mp);
+				return mp;
+			} catch(Exception e) {
+				System.out.println("erro: " + e);
+				return null;
+			} finally {
+				if(afd != null) {
+					try {
+						afd.close();
+					} catch(Exception e) {
+						System.out.println("erro: " + e);
+					}
+				}
+			}
+		}
+
+		public static void pararMusicas() {
+			for(int i = mps.size() - 1; i >= 0; i--) {
+				MediaPlayer mp = mps.get(i);
+				if(mp != null) {
+					try {
+						mp.stop();
+					} catch(Exception e) {
+						System.out.println("erro: " + e);
+					}
+					mp.release();
+					mps.remove(i);
+				}
+			}
+		}
+
+		public static void pararMusica(String nome) {
+			MediaPlayer mp = mps.get(nome);
+			if(mp != null) {
+				try {
+					mp.stop();
+				} catch(Exception e) {
+					System.out.println("erro: " + e);
+				}
+				mp.release();
+				mps.remove(mp);
+			}
+		}
+
+		public static float calcularDistancia(float x1, float y1, float x2, float y2) {
+			float dx = x1 - x2;
+			float dy = y1 - y2;
+			return (float) Math.sqrt(dx*dx + dy*dy);
+		}
+	}
+	
 	public class APIJava {
 		public String pacote;
 		public Context ctx;
 		public Console console;
+		private Audio audio = new Audio();
 		private ArquivosUtil arq = new ArquivosUtil();
 		private File ecoDir = new File(ArquivosUtil.obterArmaExterno()+"/ECO/");
 
@@ -206,8 +331,8 @@ public class MainActivity extends Activity {
 		}
 
 		@JavascriptInterface
-		public void arquivar(String caminho, String texto) {
-			arq.escreverArquivo(pacote+caminho, texto);
+		public boolean arquivar(String caminho, String texto) {
+			return arq.escreverArquivo(pacote+caminho, texto);
 		}
 		
 		@JavascriptInterface
@@ -271,6 +396,44 @@ public class MainActivity extends Activity {
 		@JavascriptInterface
 		public void criarProjeto(String nome) {
 			novoProjeto(nome);
+		}
+		
+		@JavascriptInterface
+		public void tocarAudio(String nome, String caminho, boolean loop) {
+			audio.tocarMusica(nome, pacote+caminho, loop);
+		}
+		
+		@JavascriptInterface
+		public void pararAudio(String nome) {
+			audio.pararMusica(nome);
+		}
+		
+		@JavascriptInterface
+		public void pararTodosAudios(String nome) {
+			audio.pararMusicas();
+		}
+		
+		@JavascriptInterface
+		public boolean exportarWAV(String caminho, short[] dados, int taxa) {
+			return audio.exportarWAV(caminho, dados, taxa);
+		}
+		
+		@JavascriptInterface
+		public boolean arquivarBase64(String caminho, String base64) {
+			try {
+				if(base64.contains(",")) base64 = base64.substring(base64.indexOf(",") + 1);
+				
+				byte[] bytes = Base64.decode(base64, Base64.DEFAULT);
+				File f = new File(pacote + caminho);
+				FileOutputStream fos = new FileOutputStream(f);
+				fos.write(bytes);
+				fos.flush();
+				fos.close();
+				return true;
+			} catch (Exception e) {
+				System.out.println("ERRO: "+e);
+				return false;
+			}
 		}
 	}
 }

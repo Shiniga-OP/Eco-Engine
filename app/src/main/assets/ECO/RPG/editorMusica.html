@@ -1,0 +1,514 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Eco-Engine - Editor de Música</title>
+<style>
+html,body{height:100%;margin:0;background:#000;color:#0f0;font-family:monospace}
+.cabecalho{padding:8px;background:#111;border-bottom:1px solid #0f0;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.cabecalho label{font-size:14px}
+.controles input, .controles select, .controles button{background:#000;color:#0f0;border:1px solid #0f0;padding:6px;border-radius:4px}
+.gradeArea{padding:8px;overflow:auto}
+.gradeNotas{display:grid;grid-auto-rows:36px;align-items:stretch;gap:4px}
+.rotulo{background:#111;border:1px solid #0f0;text-align:right;padding-right:8px;display:flex;align-items:center;justify-content:flex-end}
+.celula{width:36px;height:36px;border:1px solid #0f0;background:#222;touch-action:manipulation}
+.ativa{background:#0f0;color:#000}
+.tocando{background:#f00!important}
+.barraStatus{padding:8px;font-size:13px;background:rgba(255,255,255,0.02);border-top:1px solid rgba(255,255,255,0.03)}
+.controles{display:flex;gap:8px;align-items:center}
+.btPrimario{background:#0f0;color:#000;border:none;padding:8px 10px;border-radius:6px}
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.8);
+    z-index: 1000;
+}
+
+.modal-conteudo {
+    background: #111;
+    margin: 10% auto;
+    padding: 20px;
+    border: 1px solid #0f0;
+    width: 90%;
+    max-width: 500px;
+    border-radius: 8px;
+}
+
+.controles-exportacao {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 15px 0;
+}
+
+.controles-exportacao input, .controles-exportacao select {
+    background: #000;
+    color: #0f0;
+    border: 1px solid #0f0;
+    padding: 8px;
+    border-radius: 4px;
+}
+
+.botoes-exportacao {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 15px;
+}
+</style>
+</head>
+<body>
+<div class="cabecalho">
+  <div class="controles">
+    <label>BPM <input id="bpm" type="number" value="120" min="20" max="400"></label>
+    <label>Compassos <input id="passos" type="number" value="16" min="1" max="64"></label>
+    <label>Oitavas <select id="oitavas"><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option></select></label>
+    <button id="btTocar" class="btPrimario">Tocar</button>
+    <button id="btParar">Parar</button>
+    <button id="btSalvar">Salvar</button>
+    <button id="btCarregar">Carregar</button>
+    <button id="btExportar">Exportar</button>
+  </div>
+</div>
+<div id="modalExportar" class="modal">
+  <div class="modal-conteudo">
+    <h3>Exportar Música</h3>
+    <div class="controles-exportacao">
+      <label>Nome do arquivo: <input type="text" id="nomeExportacao" value="sons/musica"></label>
+      <label>Formato: 
+        <select id="formatoExportacao">
+          <option value="json">Projeto (.json)</option>
+          <option value="wav">Áudio WAV (.wav)</option>
+        </select>
+      </label>
+      <label>Taxa de amostragem: 
+        <select id="sampleRate">
+          <option value="44100">44100 Hz (Qualidade CD)</option>
+          <option value="22050">22050 Hz</option>
+          <option value="11025">11025 Hz</option>
+        </select>
+      </label>
+    </div>
+    <div class="botoes-exportacao">
+      <button id="btCancelarExportar">Cancelar</button>
+      <button id="btConfirmarExportar" class="btPrimario">Exportar</button>
+    </div>
+    <div id="statusExportacao"></div>
+  </div>
+</div>
+<div class="gradeArea">
+  <div id="grade" class="gradeNotas"></div>
+</div>
+<div class="barraStatus" id="status">Pronto</div>
+
+<script>
+const NOME_NOTAS = ['Dó','Dó#','Ré','Ré#','Mi','Fá','Fá#','Sol','Sol#','Lá','Lá#','Si'];
+let passos = 16;
+let oitavas = 3;
+let contextoAudio = null;
+let sequenciador = null;
+let estado = null;
+let passoAtual = 0;
+let agendadorID = null;
+const LOOKAHEAD = 25; // ms
+const SCHEDULE_AHEAD_TIME = 0.1; // s
+
+function iniciarContexto() {
+    if(!contextoAudio) {
+        contextoAudio = new (window.AudioContext || window.webkitAudioContext)();
+    }
+}
+
+function calcularFrequenciaPorNota(indiceGlobal) {
+    const semitomA4 = 69; // MIDI A4
+    const midi = 12 + indiceGlobal; // Dó0 = midi 12
+    return 440 * Math.pow(2, (midi - semitomA4) / 12);
+}
+
+function criarGrade() {
+    passos = parseInt(document.getElementById('passos').value, 10);
+    oitavas = parseInt(document.getElementById('oitavas').value, 10);
+    const grade = document.getElementById('grade');
+    grade.innerHTML = '';
+    
+    const totalNotas = NOME_NOTAS.length * oitavas;
+    const templateCols = '90px ' + "repeat(" + passos + ",36px)";
+    grade.style.gridTemplateColumns = templateCols;
+    
+    estado = Array.from({length: totalNotas}, () => new Array(passos).fill(false));
+    
+    for(let r = 0; r < totalNotas; r++) {
+        const linhaRotulo = document.createElement('div');
+        linhaRotulo.className = 'rotulo';
+        linhaRotulo.textContent = nomeNotaPorIndice(r);
+        grade.appendChild(linhaRotulo);
+        
+        for(let c = 0; c < passos; c++) {
+            const celula = document.createElement('div');
+            celula.className = 'celula';
+            celula.id = `cel-${r}-${c}`;
+            celula.setAttribute('dados-linha', r);
+            celula.setAttribute('dados-coluna', c);
+            
+            celula.onclick = function() {
+                alternarCelula(this);
+            };
+            
+            celula.ontouchstart = function(e) {
+                alternarCelula(this);
+                e.preventDefault();
+            };
+            
+            grade.appendChild(celula);
+        }
+    }
+}
+
+function nomeNotaPorIndice(indice) {
+    const oitava = Math.floor(indice / NOME_NOTAS.length) + 2;
+    const nota = NOME_NOTAS[indice % NOME_NOTAS.length];
+    return `${nota}${oitava}`;
+}
+
+function alternarCelula(celula) {
+    const linha = parseInt(celula.getAttribute('dados-linha'), 10);
+    const coluna = parseInt(celula.getAttribute('dados-coluna'), 10);
+    
+    estado[linha][coluna] = !estado[linha][coluna];
+    celula.classList.toggle('ativa', estado[linha][coluna]);
+}
+
+function agendar() {
+    if(!contextoAudio) iniciarContexto();
+    if(agendadorID) return;
+    
+    passoAtual = 0;
+    sequenciador = {nextNoteTime: contextoAudio.currentTime};
+    agendadorID = setInterval(scheduler, LOOKAHEAD);
+}
+
+function pararAgendador() {
+    if(agendadorID) {
+        clearInterval(agendadorID);
+        agendadorID = null;
+    }
+    limparMarcadores();
+}
+
+function scheduler() {
+    const bpm = parseInt(document.getElementById('bpm').value, 10);
+    const segundosPorCompasso = 60.0 / bpm;
+    const duracaoNota = 0.18;
+    
+    while(sequenciador.nextNoteTime < contextoAudio.currentTime + SCHEDULE_AHEAD_TIME) {
+        tocarPasso(passoAtual, sequenciador.nextNoteTime, duracaoNota);
+        marcarColuna(passoAtual);
+        sequenciador.nextNoteTime += segundosPorCompasso / 4.0;
+        passoAtual = (passoAtual + 1) % passos;
+    }
+}
+
+function tocarPasso(indicePasso, tempo, duracao) {
+    for(let linha = 0; linha < estado.length; linha++) {
+        if(estado[linha][indicePasso]) {
+            const frequencia = calcularFrequenciaIndice(linha);
+            const oscilador = contextoAudio.createOscillator();
+            const ganho = contextoAudio.createGain();
+            
+            oscilador.type = 'square';
+            oscilador.frequency.setValueAtTime(frequencia, tempo);
+            ganho.gain.setValueAtTime(0.0, tempo);
+            ganho.gain.linearRampToValueAtTime(0.4, tempo + 0.005);
+            ganho.gain.linearRampToValueAtTime(0.0, tempo + duracao);
+            
+            oscilador.connect(ganho);
+            ganho.connect(contextoAudio.destination);
+            oscilador.start(tempo);
+            oscilador.stop(tempo + duracao + 0.02);
+        }
+    }
+}
+
+function calcularFrequenciaIndice(indiceGlobal) {
+    const midi = 12 + indiceGlobal + (2 * 12);
+    return 440 * Math.pow(2, (midi - 69) / 12);
+}
+
+function marcarColuna(coluna) {
+    limparMarcadores();
+    
+    for(let linha = 0; linha < estado.length; linha++) {
+        const elemento = document.getElementById(`cel-${linha}-${coluna}`);
+        if(elemento) elemento.classList.add('tocando');
+    }
+    
+    document.getElementById('status').textContent = `Tocando passo ${coluna + 1} / ${passos}`;
+}
+
+function limparMarcadores() {
+    const elementos = document.getElementsByClassName('tocando');
+    while(elementos.length > 0) {
+        elementos[0].classList.remove('tocando');
+    }
+    document.getElementById('status').textContent = 'Pronto';
+}
+
+function gerarDadosProjeto() {
+    return JSON.stringify({
+        bpm: parseInt(document.getElementById('bpm').value, 10),
+        passos: passos,
+        oitavas: oitavas,
+        matriz: estado,
+        dataCriacao: new Date().toISOString(),
+        versao: '1.0'
+    });
+}
+
+function gerarDadosAudio(taxaAmostragem=44100, duracaoSegundos) {
+    const bpm = parseInt(document.getElementById('bpm').value, 10);
+    const segundosPorPasso = (60.0 / bpm) / 4.0; // duração de 1/4 de nota(passo)
+    const duracaoNota = 0.18; // duração real da nota pra o ADSR simples
+    // calcula a duração total e o ArrayBuffer necessario
+    const totalAmostras = Math.ceil(taxaAmostragem * duracaoSegundos);
+    const dadosAudio = new Float32Array(totalAmostras).fill(0);
+
+    for(let indicePasso = 0; indicePasso < passos; indicePasso++) {
+        // calcula o tempo de inicio do passo em segundos
+        const tempoInicio = indicePasso * segundosPorPasso;
+        const amostraInicio = Math.floor(tempoInicio * taxaAmostragem);
+        const amostraFim = amostraInicio + Math.floor(duracaoNota * taxaAmostragem);
+
+        for(let linha = 0; linha < estado.length; linha++) {
+            if(estado[linha][indicePasso]) {
+                const frequencia = calcularFrequenciaIndice(linha);
+                
+                // "desenha" o som no array:
+                for(let i = amostraInicio; i < amostraFim && i < totalAmostras; i++) {
+                    const t = (i - amostraInicio) / taxaAmostragem;
+                    
+                    // envelope de ganho
+                    let ganho = 0.4;
+                    if(t < 0.005) ganho = (t / 0.005) * 0.4; // attack
+                    else if(t > (duracaoNota - 0.02)) ganho = ((duracaoNota - t) / 0.02) * 0.4; // releasse
+                    dadosAudio[i] += Math.sin(2 * Math.PI * frequencia * t) * ganho;
+                }
+            }
+        }
+    }
+    for(let i = 0; i < totalAmostras; i++) {
+        dadosAudio[i] = Math.max(-1.0, Math.min(1.0, dadosAudio[i]));
+    }
+    return dadosAudio;
+}
+
+function converterFloat32ParaInt16(arrayFloat32) {
+    const int16 = new Int16Array(arrayFloat32.length);
+    for(let i = 0; i < arrayFloat32.length; i++) {
+        const amostra = Math.max(-1, Math.min(1, arrayFloat32[i]));
+        int16[i] = amostra < 0 ? amostra * 0x8000 : amostra * 0x7FFF;
+    }
+    return int16;
+}
+
+function arrayBufferParaBase64(buffer) {
+    let binario = '';
+    const bytes = new Uint8Array(buffer);
+    for(let i = 0; i < bytes.byteLength; i++) {
+        binario += String.fromCharCode(bytes[i]);
+    }
+    return btoa(binario);
+}
+
+function exportarMusica() {
+    const nomeArquivo = document.getElementById('nomeExportacao').value;
+    const formato = document.getElementById('formatoExportacao').value;
+    const taxaAmostragem = parseInt(document.getElementById('sampleRate').value, 10);
+    const statusExportacao = document.getElementById('statusExportacao');
+    
+    statusExportacao.textContent = 'Exportando...';
+    statusExportacao.style.color = '#0f0';
+    
+    try {
+        if(formato === 'json') {
+            const dadosProjeto = gerarDadosProjeto();
+            const sucesso = Android.arquivar(`${nomeArquivo}.json`, dadosProjeto);
+            
+            if(sucesso) {
+                statusExportacao.textContent = 'Projeto exportado com sucesso!';
+            } else {
+                statusExportacao.textContent = 'Erro ao exportar projeto.';
+                statusExportacao.style.color = '#f00';
+            }
+            
+        } else if(formato === 'wav') {
+            // gera os dados de audio em Float32Array
+            const duracaoSegundos = (passos / 4) * (60.0 / parseInt(document.getElementById('bpm').value, 10)); 
+            const dadosAudio = gerarDadosAudio(taxaAmostragem, duracaoSegundos); 
+
+            // converte pra ArrayBuffer de Int16
+            const dadosInt16 = converterFloat32ParaInt16(dadosAudio);
+            
+            // envelopar os dados Int16 com o cabecalho wav
+            const wavBuffer = criarWavHeader(dadosInt16.buffer, dadosInt16.length, taxaAmostragem);
+            
+            // converte o ArrayBuffer completo(Leitor + Dados) para Base64
+            const dadosBase64 = arrayBufferParaBase64(wavBuffer);
+            // arquivar:
+            const caminhoCompleto = `${nomeArquivo}.wav`;
+            const sucesso = Android.arquivarBase64(caminhoCompleto, `data:audio/wav;base64,${dadosBase64}`);
+            if(sucesso) {
+                statusExportacao.textContent = `Áudio WAV exportado com sucesso para: ${caminhoCompleto}`;
+            } else {
+                statusExportacao.textContent = `Erro ao exportar WAV.`;
+                statusExportacao.style.color = '#f00';
+            }
+        } else {
+             statusExportacao.textContent = `Formato ${formato.toUpperCase()} não suportado (apenas JSON e WAV).`;
+             statusExportacao.style.color = '#f00';
+        }
+    } catch(erro) {
+        statusExportacao.textContent = `Erro: ${erro.message}`;
+        statusExportacao.style.color = '#f00';
+        console.error('Erro na exportação:', erro);
+    }
+}
+
+function criarWavHeader(buffer, numAmostras, taxaAmostragem) {
+    const canais = 1; // mono
+    const profundidadeBits = 16;
+    const bytesPorAmostra = profundidadeBits / 8;
+    
+    const byteTaxa = canais * taxaAmostragem * bytesPorAmostra;
+    const blocoAlinhamento = canais * bytesPorAmostra;
+    const dadosTam = numAmostras * bytesPorAmostra;
+    const arqTam = 36 + dadosTam;
+    
+    const arrayBuffer = new ArrayBuffer(44 + dadosTam);
+    const v = new DataView(arrayBuffer);
+    
+    let pos = 0;
+    
+    function writeString(s) {
+        for (let i = 0; i < s.length; i++) {
+            v.setUint8(pos + i, s.charCodeAt(i));
+        }
+        pos += s.length;
+    }
+    
+    function writeUint32(num) {
+        v.setUint32(pos, num, true);
+        pos += 4;
+    }
+    
+    function writeUint16(num) {
+        v.setUint16(pos, num, true);
+        pos += 2;
+    }
+
+    writeString('RIFF'); // 00 - 03
+    writeUint32(arqTam); // 04 - 07
+    writeString('WAVE'); // 08 - 11
+
+    writeString('fmt '); // 12 - 15
+    writeUint32(16); // 16 - 19 (tamanho do chunk)
+    writeUint16(1); // 20 - 21 (formato de áudio: 1 = PCM)
+    writeUint16(canais); // 22 - 23
+    writeUint32(taxaAmostragem); // 24 - 27
+    writeUint32(byteTaxa); // 28 - 31
+    writeUint16(blocoAlinhamento); // 32 - 33
+    writeUint16(profundidadeBits); // 34 - 35
+
+    writeString('data'); // 36 - 39
+    writeUint32(dadosTam); // 40 - 43
+
+    // dados de audio(copia o buffer Int16)
+    const int16Array = new Int16Array(buffer);
+    const uint8Array = new Uint8Array(arrayBuffer, 44);
+    uint8Array.set(new Uint8Array(int16Array.buffer));
+
+    return arrayBuffer;
+}
+
+function conectarBotoes() {
+    document.getElementById('btTocar').onclick = () => {
+        iniciarContexto();
+        agendar();
+    };
+    
+    document.getElementById('btParar').onclick = () => {
+        pararAgendador();
+    };
+    
+    document.getElementById('btSalvar').onclick = salvarPadrao;
+    document.getElementById('btCarregar').onclick = carregarPadrao;
+    document.getElementById('btExportar').onclick = mostrarModalExportacao;
+    document.getElementById('btConfirmarExportar').onclick = exportarMusica;
+    document.getElementById('btCancelarExportar').onclick = fecharModalExportacao;
+    
+    document.getElementById('passos').onchange = criarGrade;
+    document.getElementById('oitavas').onchange = criarGrade;
+}
+
+function mostrarModalExportacao() {
+    document.getElementById('modalExportar').style.display = 'block';
+}
+
+function fecharModalExportacao() {
+    document.getElementById('modalExportar').style.display = 'none';
+    document.getElementById('statusExportacao').textContent = '';
+}
+
+function salvarPadrao() {
+    const nome = 'eco_padrao_v1';
+    const dados = {
+        bpm: parseInt(document.getElementById('bpm').value, 10),
+        passos: passos,
+        oitavas: oitavas,
+        matriz: estado
+    };
+    localStorage.setItem(nome, JSON.stringify(dados));
+    document.getElementById('status').textContent = 'Padrão salvo localmente';
+}
+
+function carregarPadrao() {
+    const nome = 'eco_padrao_v1';
+    const dadosSalvos = localStorage.getItem(nome);
+    
+    if(!dadosSalvos) {
+        document.getElementById('status').textContent = 'Nenhum padrão salvo encontrado';
+        return;
+    }
+    const dados = JSON.parse(dadosSalvos);
+    document.getElementById('bpm').value = dados.bpm || 120;
+    document.getElementById('passos').value = dados.passos || passos;
+    document.getElementById('oitavas').value = dados.oitavas || oitavas;
+    
+    criarGrade();
+    
+    for(let linha = 0; linha < estado.length && linha < dados.matriz.length; linha++) {
+        for(let coluna = 0; coluna < passos && coluna < dados.matriz[linha].length; coluna++) {
+            estado[linha][coluna] = dados.matriz[linha][coluna];
+            const celula = document.getElementById(`cel-${linha}-${coluna}`);
+            if(celula) {
+                celula.classList.toggle('ativa', estado[linha][coluna]);
+            }
+        }
+    }
+    document.getElementById('status').textContent = 'Padrão carregado';
+}
+
+conectarBotoes();
+criarGrade();
+
+window.onclick = (e) => {
+    const modal = document.getElementById('modalExportar');
+    if(e.target === modal) fecharModalExportacao();
+}
+</script>
+</body>
+</html>

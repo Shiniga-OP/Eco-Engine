@@ -112,7 +112,7 @@ class ArquivosUtil {
         return sb.toString();
     }
 
-    public static void escreverArquivo(String caminho, String texto) {
+    public static boolean escreverArquivo(String caminho, String texto) {
         criarArquivo(caminho);
         FileWriter escritor = null;
 
@@ -124,10 +124,11 @@ class ArquivosUtil {
             e.printStackTrace();
         } finally {
             try {
-                if(escritor != null)
-                    escritor.close();
+                if(escritor != null) escritor.close();
+				return true;
             } catch(IOException e) {
                 e.printStackTrace();
+				return false;
             }
         }
     }

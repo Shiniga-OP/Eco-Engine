@@ -1,4 +1,4 @@
-class Engine {
+class Motor {
   constructor(canvasId, renderAutomatico=true, canvasCompleto=false) {
     if(canvasId) this.canvas = document.getElementById(canvasId);
     else {
@@ -173,6 +173,16 @@ class Engine {
     if(this.renderizacao) requestAnimationFrame(() => this.renderizar());
   }
   
+  encostou(s1, s2) {
+      if(s1.x + s1.escalaX <= s2.x || 
+      s1.x >= s2.x + s2.escalaX || 
+      s1.y + s1.escalaY <= s2.y || 
+      s1.y >= s2.y + s2.escalaY) {
+          return false;
+      }
+      return true;
+  }
+  
   solido(s1, s2, elasticidade=0.8, atrito=0.3) {
     if(s1.x + s1.escalaX <= s2.x || 
         s1.x >= s2.x + s2.escalaX || 
@@ -212,13 +222,13 @@ class Engine {
     return solidos;
   }
   
-  novoTexto(escrita, tamanho="30px", coloracao="blue", camada=this.camada) {
+  novoTexto(escrita, tamanho=30, coloracao="blue", camada=this.camada) {
     const texto = {
       texto: escrita,
       cor: coloracao,
       x: 100,
       y: 100,
-      escala: tamanho+" Ariel",
+      escala: tamanho+"px"+" Ariel",
       escalaX: 228,
       escalaY: 32
     };
@@ -308,42 +318,35 @@ class Engine {
       } else {
         objeto.x += passoX;
         objeto.y += passoY;
-      requestAnimationFrame(mover);
-    }
-  };
-  mover();
-}
-
- moverParaArray(objeto, array) {
-  function moverParaPonto(i) {
-    if(i>=array.length) return;
-
-    const dx = array[i].x - objeto.x;
-    const dy = array[i].y - objeto.y;
-    const distancia = Math.sqrt(dx * dx + dy * dy);
-    const passoX = (dx / distancia) * array[i].velo;
-    const passoY = (dy / distancia) * array[i].velo;
-
-    const mover = () => {
-      if(Math.abs(objeto.x - array[i].x) < Math.abs(passoX) && Math.abs(objeto.y - array[i].y) < Math.abs(passoY)) {
-        objeto.x = array[i].x;
-        objeto.y = array[i].y;
-        moverParaPonto(i + 1);
-      } else {
-        objeto.x += passoX;
-        objeto.y += passoY;
         requestAnimationFrame(mover);
       }
     };
     mover();
   }
-  moverParaPonto(0);
-}
   
-  repetirAte(condicao, funcao) {
-    while(condicao) {
-      funcao();
-    }
+  moverParaArray(objeto, array) {
+      function moverParaPonto(i) {
+          if(i>=array.length) return;
+          const dx = array[i].x - objeto.x;
+          const dy = array[i].y - objeto.y;
+          const distancia = Math.sqrt(dx * dx + dy * dy);
+          const passoX = (dx / distancia) * array[i].velo;
+          const passoY = (dy / distancia) * array[i].velo;
+          
+          const mover = () => {
+              if(Math.abs(objeto.x - array[i].x) < Math.abs(passoX) && Math.abs(objeto.y - array[i].y) < Math.abs(passoY)) {
+                  objeto.x = array[i].x;
+                  objeto.y = array[i].y;
+                  moverParaPonto(i + 1);
+              } else {
+                  objeto.x += passoX;
+                  objeto.y += passoY;
+                  requestAnimationFrame(mover);
+              }
+          };
+          mover();
+      }
+      moverParaPonto(0);
   }
   
   repetirVezes(quantidade, funcao) {
@@ -352,17 +355,17 @@ class Engine {
     }
   }
   
-  esperar(tempo=1, funcao) {
+  esperar(tempo=1000, funcao) {
     setTimeout(() => {
       funcao();
-    }, tempo*1000);
+    }, tempo);
   }
   
   sempreExecutar(funcao, intervalo=0) {
     setTimeout(() => {
       funcao();
       requestAnimationFrame(() => this.sempreExecutar(funcao, intervalo));
-    }, intervalo*1000)
+    }, intervalo)
   }
   
   limpar() {
@@ -393,16 +396,16 @@ class Sprite {
 
 class Camera {
   constructor(engine, foco) {
-    this.engine = engine;
+    this.motor = engine;
     this.foco = foco;
     this.x = 0;
     this.y = 0;
   }
 
   att() {
-    this.x = this.foco.x - (this.engine.canvas.width / 2 - this.foco.escalaX / 2);
-    this.y = this.foco.y - (this.engine.canvas.height / 2 - this.foco.escalaY / 2);
-    this.engine.ctx.translate(-this.x, -this.y);
+    this.x = this.foco.x - (this.motor.canvas.width / 2 - this.foco.escalaX / 2);
+    this.y = this.foco.y - (this.motor.canvas.height / 2 - this.foco.escalaY / 2);
+    this.motor.ctx.translate(-this.x, -this.y);
   }
 }
 
@@ -520,8 +523,8 @@ class ArrastavelHtml {
 
 class EditorMapas {
     constructor(tilesImgId="tiles", canvasId="telaJogo") {
-        if(canvasId instanceof Engine) this.engine = canvasId
-        else this.engine = new Engine(canvasId, false, false);
+        if(canvasId instanceof Motor) this.motor = canvasId
+        else this.motor = new Motor(canvasId, false, false);
         this.modo = "desenhar";
         this.camadaAtual = 0;
         this.tileSelecionado = { x: 0, y: 0 };
@@ -551,7 +554,7 @@ class EditorMapas {
       }
       
       iniciarMapa(largura, altura) {
-        for(let i = 0; i < this.engine.camadas.length; i++) {
+        for(let i = 0; i < this.motor.camadas.length; i++) {
           this.mapaTiles[i] = Array.from({ length: altura }, () => 
             Array.from({ length: largura }, () => null));
         }
@@ -572,7 +575,7 @@ class EditorMapas {
       preencher(e) {
           if(this.modo != "balde" || !this.ativo) return;
           
-          const coords = this.engine.obterCoordGlobal(e);
+          const coords = this.motor.obterCoordGlobal(e);
           const x = Math.floor(coords.x / this.tamanhoTile);
           const y = Math.floor(coords.y / this.tamanhoTile);
           
@@ -585,7 +588,7 @@ class EditorMapas {
           tileAlvo.sy === tileSelecionado.y * this.tamanhoTile) return;
           
           this.preencherArea(x, y, tileAlvo);
-          this.engine.renderizar();
+          this.motor.renderizar();
       }
       
       preencherArea(xInicial, yInicial, tileAlvo) {
@@ -606,11 +609,11 @@ class EditorMapas {
               if(!mesmoTipo) continue;
               visitados.add(chave);
               if(tileAtual) {
-                  this.engine.rm(tileAtual, this.engine.camadas[this.camadaAtual]);
+                  this.motor.rm(tileAtual, this.motor.camadas[this.camadaAtual]);
               }
-              const novoTile = this.engine.novoSprite(
+              const novoTile = this.motor.novoSprite(
                   this.tilesetImg.src,
-                  this.engine.camadas[this.camadaAtual]);
+                  this.motor.camadas[this.camadaAtual]);
                   novoTile.x = x * this.tamanhoTile;
                   novoTile.y = y * this.tamanhoTile;
                   novoTile.escalaX = this.tamanhoTile;
@@ -629,18 +632,18 @@ class EditorMapas {
       addTile(e) {
         if(this.modo != "desenhar" || !this.ativo) return;
         
-        const coords = this.engine.obterCoordGlobal(e);
+        const coords = this.motor.obterCoordGlobal(e);
         const x = Math.floor(coords.x / this.tamanhoTile);
         const y = Math.floor(coords.y / this.tamanhoTile);
         
         if(x < 0 || y < 0 || x >= this.mapaTiles[0][0].length || y >= this.mapaTiles[0].length) return;
         
         const tileExistente = this.mapaTiles[this.camadaAtual][y][x];
-        if(tileExistente) this.engine.rm(tileExistente, this.engine.camadas[this.camadaAtual]);
+        if(tileExistente) this.motor.rm(tileExistente, this.motor.camadas[this.camadaAtual]);
         
-        const novoTile = this.engine.novoSprite(
+        const novoTile = this.motor.novoSprite(
           this.tilesetImg.src,
-          this.engine.camadas[this.camadaAtual]);
+          this.motor.camadas[this.camadaAtual]);
         novoTile.x = x * this.tamanhoTile;
         novoTile.y = y * this.tamanhoTile;
         novoTile.escalaX = this.tamanhoTile;
@@ -654,13 +657,13 @@ class EditorMapas {
         
         this.mapaTiles[this.camadaAtual][y][x] = novoTile;
         
-        this.engine.renderizar();
+        this.motor.renderizar();
       }
       
       rmTile(e) {
         if(this.modo != "apagar" || !this.ativo) return;
         
-        const coords = this.engine.obterCoordGlobal(e);
+        const coords = this.motor.obterCoordGlobal(e);
         const x = Math.floor(coords.x / this.tamanhoTile);
         const y = Math.floor(coords.y / this.tamanhoTile);
         
@@ -668,14 +671,14 @@ class EditorMapas {
 
         const tile = this.mapaTiles[this.camadaAtual][y][x];
         if(tile) {
-          this.engine.rm(tile, this.engine.camadas[this.camadaAtual]);
+          this.motor.rm(tile, this.motor.camadas[this.camadaAtual]);
           this.mapaTiles[this.camadaAtual][y][x] = null;
         }
-        this.engine.renderizar();
+        this.motor.renderizar();
       }
       
       novaCamada() {
-        const camada = this.engine.novaCamada();
+        const camada = this.motor.novaCamada();
         const altura = this.mapaTiles[0].length;
         const largura = this.mapaTiles[0][0].length;
         this.mapaTiles.push(Array.from({ length: altura }, () => 
@@ -686,20 +689,20 @@ class EditorMapas {
       }
       
       rmCamada() {
-        if(this.engine.camadas.length <= 1) {
+        if(this.motor.camadas.length <= 1) {
           alert("Não é possível remover a última camada.");
           return;
         }
-        const camada = this.engine.camadas[this.camadaAtual];
-        while(camada.length > 0) this.engine.rm(camada[0], camada);
+        const camada = this.motor.camadas[this.camadaAtual];
+        while(camada.length > 0) this.motor.rm(camada[0], camada);
         
-        this.engine.camadas.splice(this.camadaAtual, 1);
+        this.motor.camadas.splice(this.camadaAtual, 1);
         this.mapaTiles.splice(this.camadaAtual, 1);
         
-        if(this.camadaAtual >= this.engine.camadas.length) this.camadaAtual = this.engine.camadas.length - 1;
+        if(this.camadaAtual >= this.motor.camadas.length) this.camadaAtual = this.motor.camadas.length - 1;
         
         this.attListaCamadas();
-        this.engine.renderizar();
+        this.motor.renderizar();
       }
       
       selecionarCamada(indice) {
@@ -711,14 +714,14 @@ class EditorMapas {
         const lista = document.getElementById("listaCamadas");
         lista.innerHTML = "";
         
-        for(let i = 0; i < this.engine.camadas.length; i++) {
+        for(let i = 0; i < this.motor.camadas.length; i++) {
           const bt = document.createElement("button");
-          bt.textContent = `Camada ${this.engine.camadas[i].nome} ${i === this.camadaAtual ? "(Ativa)" : ""}`;
+          bt.textContent = `Camada ${this.motor.camadas[i].nome} ${i === this.camadaAtual ? "(Ativa)" : ""}`;
           bt.addEventListener("click", () => this.selecionarCamada(i));
           lista.appendChild(bt);
         }
-        document.getElementById("nomeCamada").value = this.engine.camadas[this.camadaAtual].nome;
-        document.getElementById("nivelCamada").value = this.engine.camadas[this.camadaAtual].nivel;
+        document.getElementById("nomeCamada").value = this.motor.camadas[this.camadaAtual].nome;
+        document.getElementById("nivelCamada").value = this.motor.camadas[this.camadaAtual].nivel;
       }
       
       salvarMapa() {
@@ -728,7 +731,7 @@ class EditorMapas {
           camadas: []
         };
         for(let c = 0; c < this.mapaTiles.length; c++) {
-          const ca = this.engine.camadas[c];
+          const ca = this.motor.camadas[c];
           const camada = {nome: ca.nome, nivel: ca.nivel, estatica: ca.estatica, sprites: []};
           for(let y = 0; y < this.mapaTiles[c].length; y++) {
             const linha = [];
@@ -755,14 +758,14 @@ class EditorMapas {
             return;
           }
           const dadosMapa = JSON.parse(jsonStr);
-          this.engine.limpar();
+          this.motor.limpar();
           this.mapaTiles = [];
           tileset.src = dadosMapa.tileset;
           this.tamanhoTile = dadosMapa.tamanhoTile || 16;
           
           for(let c = 0; c < dadosMapa.camadas.length; c++) {
             const camadaDados = dadosMapa.camadas[c];
-            const camada = c === 0 ? this.engine.camada : this.engine.novaCamada(camadaDados.nome, camadaDados.nivel, camadaDados.estatica);
+            const camada = c === 0 ? this.motor.camada : this.motor.novaCamada(camadaDados.nome, camadaDados.nivel, camadaDados.estatica);
             
             this.mapaTiles[c] = Array.from({ length: camadaDados.sprites.length }, () => 
               Array.from({ length: camadaDados.sprites[0].length }, () => null)
@@ -771,7 +774,7 @@ class EditorMapas {
               for(let x = 0; x < camadaDados.sprites[y].length; x++) {
                 const tileDados = camadaDados.sprites[y][x];
                 if(tileDados) {
-                  const tile = this.engine.novoSprite(tileset.src, camada);
+                  const tile = this.motor.novoSprite(tileset.src, camada);
                   tile.x = x * this.tamanhoTile;
                   tile.y = y * this.tamanhoTile;
                   tile.escalaX = this.tamanhoTile;
@@ -787,7 +790,7 @@ class EditorMapas {
             }
           }
           this.camadaAtual = 0;
-          this.engine.renderizar();
+          this.motor.renderizar();
         } catch(e) {
           console.error("Erro ao carregar mapa: " + e.message);
           alert("Erro ao carregar mapa: " + e.message);

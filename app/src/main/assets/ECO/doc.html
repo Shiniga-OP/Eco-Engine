@@ -11,19 +11,16 @@
             box-sizing: border-box;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-        
         body {
             background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
             color: #f0f6fc;
             line-height: 1.6;
         }
-        
         .grupo {
             max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
         }
-        
         header {
             text-align: center;
             padding: 40px 0;
@@ -31,25 +28,21 @@
             border-radius: 10px;
             margin-bottom: 30px;
         }
-        
         h1 {
             font-size: 3rem;
             margin-bottom: 10px;
             color: #4caf50;
             text-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
         }
-        
         .linha-marcada {
             font-size: 1.2rem;
             color: #a8dadc;
             margin-bottom: 20px;
         }
-        
         .logo {
             font-size: 5rem;
             margin-bottom: 20px;
         }
-        
         .sessao {
             background: rgba(255, 255, 255, 0.05);
             border-radius: 10px;
@@ -57,45 +50,37 @@
             margin-bottom: 30px;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
         }
-        
         h2 {
             color: #4caf50;
             margin-bottom: 15px;
             border-bottom: 1px solid rgba(76, 175, 80, 0.3);
             padding-bottom: 10px;
         }
-        
         h3 {
             color: #a8dadc;
             margin: 15px 0 10px;
         }
-        
         p { margin-bottom: 15px; }
-        
         .recursos {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 20px;
             margin: 20px 0;
         }
-        
         .recurso-div {
             background: rgba(0, 0, 0, 0.2);
             padding: 20px;
             border-radius: 8px;
             transition: transform 0.3s ease;
         }
-        
         .recurso-div:hover {
             transform: translateY(-5px);
         }
-        
         .recurso-icone {
             font-size: 2rem;
             margin-bottom: 10px;
             color: #4caf50;
         }
-        
         .codigo {
             background: #1e1e1e;
             padding: 15px;
@@ -104,14 +89,12 @@
             margin: 20px 0;
             font-family: 'Courier New', monospace;
         }
-        
         .coment { color: #6a9955; }
         .chave { color: #569cd6; }
         .api { color: #6DF7B1FF; }
         .func { color: #dcdcaa; }
         .num { color: #FF22A9FF; }
         .string { color: #ce9178; }
-        
         .bt {
             display: inline-block;
             background: #4caf50;
@@ -123,37 +106,30 @@
             margin: 10px 5px;
             transition: background 0.3s ease;
         }
-        
         .bt:hover { background: #3d8b40; }
         .bt-youtube { background: #BF0000FF; }
         .bt-youtube:hover { background: red; }
         .bt-segundario { background: #2c5364; }
         .bt-segundario:hover { background: #203a43; }
         .status-lista { list-style-type: none; }
-        
         .status-lista li {
             padding: 8px 0;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
-        
         .status-lista li:before {
             content: "🟢 ";
             margin-right: 10px;
         }
-        
         .status-lista li.em-progresso:before { content: "🟡 "; }
         .status-lista li.pendente:before { content: "🔴 "; }
-        
         footer {
             text-align: center;
             padding: 30px 0;
             margin-top: 40px;
             border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
-        
         @media (max-width: 768px) {
             .recursos { grid-template-columns: 1fr; }
-            
             h1 { font-size: 2.2rem; }
         }
     </style>
@@ -189,6 +165,11 @@
                     <h3>API Java</h3>
                     <p>Métodos essenciais para operações de arquivos e interface com o sistema Android.</p>
                 </div>
+                <div class="recurso-div">
+                    <div class="recurso-icone"></div>
+                    <h3>Núcleo próprio</h3>
+                    <p>A Eco-Engine possui uma implementação própria para manipular a renderização com abstrações úteis que não afetam o desempenho consíderavelmente. O arquivo nucleo.js contém toda a implememtação em formato legível.</p>
+                </div>
             </div>
         </div>
         <div class="sessao">
@@ -202,7 +183,8 @@
                 <span class="chave">let</span> ehDiretorio = <span class="func">Android</span>.ehDir(<span class="string">"caminho/pasta"</span>);<br><br>
                 
                 <span class="coment">// lista todos os arquivos do caminho</span><br>
-                <span class="chave">const</span> array = <span class="func">Android</span>.listarArquivos(<span class="string">"caminho/arquivos/"</span>);<br><br>
+                <span class="chave">const</span> array = <span class="func">Android</span>.listarArquivos(<span class="string">"caminho/arquivos/"</span>);<br>
+                <span class="chave">const</span> arquivos = <span class="func">JSON</span>.parse(array.replace(<span class="string">"["</span>, <span class="string">"[\""</span>).replace(<span class="string">"]"</span>, <span class="string">"\"]"</span>).replace(/, /g, <span class="string">"\"</span>,\<span class="string">"</span>));<br><br>
                 
                 <span class="coment">// armazena dados em arquivo</span><br>
                 <span class="func">Android</span>.arquivar(<span class="string">"caminho.txt"</span>, conteudoString);<br><br>
@@ -226,14 +208,20 @@
                 <span class="func">Android</span>.pacoteSub();<br><br>
                 
                 <span class="coment">// cria um projeto padrão</span><br>
-                <span class="func">Android</span>.criarProjeto(<span class="string">"nome"</span>);
+                <span class="func">Android</span>.criarProjeto(<span class="string">"nome"</span>);<br><br>
+                <span class="coment">// toca um áudio diretamente com MediaPlayer do Java:</span><br>
+                <span class="func">Android</span>.tocarAudio(<span class="string">"nome id"</span>, <span class="string">"arquivo.wav"</span>, <span class="num">false</span>); <span class="coment">// o false é para o áudio não entrar em loop</span><br><br>
+                <span class="coment">// para áudios com id:</span><br>
+                <span class="func">Android</span>.pararAudio(<span class="string">"nome id"</span>);<br><br>
+                <span class="coment">// para todos os áudios criados em execução:</span>
+                <span class="func">Android</span>.pararAudios();
             </div>
-            <p>Essas funcionalidades estão limitadas ao escopo do projeto, sem acessos totais ao armazenamento externo para segurança.</p>
+            <p>Essas funcionalidades estão limitadas ao escopo do projeto, sem acessos totais ao armazenamento externo para segurança. Os métodos de acesso a arquivos como "Android.ler(...);" criam arquivos caso não existam para evitar erros de uso. Certifique-se de que os arquivos a serem acessados realmente existem e que o caminho esteja correto.</p>
         </div>
         <div class="sessao">
             <h2>Como Começar</h2>
             <p>Para testar a versão mais atual da Eco-Engine, compile o APK diretamente do repositório GitHub.</p>
-            <a href="#" class="bt">Download da Beta (indisponivel)</a>
+            <a href="https://github.com/Shiniga-OP/Eco-Engine/releases/download/ECO_beta-0.1.1/Eco-Engine_0.1.1.apk" class="bt">Download da Beta (instavel)</a>
             <a href="https://youtube.com/@shiniga-op?si=sQO5Te6qp2Z2kQer" class="bt bt-youtube">Youtube</a>
             <a href="https://github.com/Shiniga-OP/Eco-Engine" class="bt bt-segundario">Repositório GitHub</a>
         </div>
@@ -241,7 +229,6 @@
             <!-- objeto basico -->
             <h2>Sobre Objetos basicos.</h2>
             <p>Um exemplo simples de como criar um jogo básico com a Eco-Engine:</p>
-            
             <div class="codigo">
                 <span class="chave">const</span> player = {<br>
                 &nbsp;&nbsp;x: <span class="num">400</span>,<br>
@@ -252,14 +239,14 @@
                 };<br><br>
                 
                 <span class="coment">// para adicionar na renderização:</span><br>
-                engine.<span class="func">add</span>(player);
+                eco.<span class="func">add</span>(player);
             </div>
             <!-- sprite basico -->
             <h2>Como criar um objeto sprite.</h2>
             <p>Você pode criar objetos sprite de duas formas.</p>
             <p>Primeiro e mais facíl:</p>
             <div class="codigo">
-                <span class="chave">const</span> player = engine.<span class="func">novoSprite</span>(<span class="string">"sprs/terra.png"</span>); <span class="coment">// isto cria um sprite e adiciona para rendedização</span>
+                <span class="chave">const</span> player = eco.<span class="func">novoSprite</span>(<span class="string">"sprs/terra.png"</span>); <span class="coment">// isto cria um sprite e adiciona para rendedização</span>
             </div>
             <p>E segundo, mais detalhado:</p>
             <div class="codigo">
@@ -269,8 +256,9 @@
                 &nbsp;&nbsp;<span class="num">100</span>,<span class="coment"> // posição Y do sprite (opcional)</span><br>
                 &nbsp;&nbsp;<span class="num">60</span>,<span class="coment"> // largura do sprite (opcional)</span><br>
                 &nbsp;&nbsp;<span class="num">60</span>,<span class="coment"> // altura do sprite (opcional)</span><br>);<br>
-                engine.<span class="func">add</span>(player);
+                eco.<span class="func">add</span>(player);
             </div>
+            <p>O metodo "eco.add(...);" também retorna o objeto, então você pode resumir a criação do sprite em uma linha.</p>
         </div>
         <div class="sessao">
             <!-- botões -->
@@ -288,21 +276,21 @@
                 &nbsp;&nbsp;&nbsp;&nbsp;player.x = <span class="num">0</span>;<br>
                 &nbsp;&nbsp;}<br>
                 };<br>
-                engine.<span class="func">addBotao</span>(botao);
+                eco.<span class="func">addBotao</span>(botao);
             </div>
-            <p>"engine.addBotao(...);" também adiciona o botão para renderização automatica. Você pode utilizar esse sistema para sprites também. Lembre-se de adicionar o método ANTES de utilizar "engine.addBotao(...);".</p><br>
+            <p>"eco.addBotao(...);" também adiciona o botão para renderização automatica. Você pode utilizar esse sistema para sprites também. Lembre-se de adicionar o método ANTES de utilizar "eco.addBotao(...);".</p><br>
             <p>Exemplo:</p>
             <div class="codigo">
                 <span class="coment">// botao criado com new Sprite(...);</span><br>
                 botao.pressionado = () <span class="chave">=></span> player.x += <span class="num">1</span>;<br>
-                engine.<span class="func">addBotao</span>(botao);
+                eco.<span class="func">addBotao</span>(botao);
             </div>
         </div>
         <div class="sessao">
             <h2>Sobre camadas:</h2>
             <p>Você pode criar camadas com:</p>
             <div class="codigo">
-                <span class="chave">const</span> camada = engine.<span class="func">novaCamada</span>(<span class="string">"nome"</span>, <span class="num">1</span>, <span class="num">false</span>);<br><br>
+                <span class="chave">const</span> camada = eco.<span class="func">novaCamada</span>(<span class="string">"nome"</span>, <span class="num">1</span>, <span class="num">false</span>);<br><br>
                 <span class="coment">// ou:</span><br><br>
                 <span class="chave">const</span> camada = {<br>
                 &nbsp;&nbsp;nome: <span class="string">"nome"</span>, nivel: <span class="num">1</span>, sprites: [], estatica: <span class="num">false</span>,<br>
@@ -310,23 +298,23 @@
                 &nbsp;&nbsp;&nbsp;&nbsp;<span class="api">this</span>.sprites.<span class="func">push</span>(objeto);<br>
                 &nbsp;&nbsp;}<br>
                 };<br>
-                engine.camadas.<span class="func">push</span>(camada);
+                eco.camadas.<span class="func">push</span>(camada);
             </div>
             <p>Se uma camada com o mesmo nome da que você quer criar já exista, ela pode ser substituida, mas se o nivel for diferente, existirão duas camadas com o mesmo nome, e talvez vpcê precise buscá-la com:</p>
             <div class="codigo">
-                <span class="chave">const</span> camada = engine.camadas.<span class="func">find</span>(c <span class="chave">=></span> c.nivel == <span class="num">1</span>); <span class="coment">// 1 é o nivel da camada que você quer obter</span> 
+                <span class="chave">const</span> camada = eco.camadas.<span class="func">find</span>(c <span class="chave">=></span> c.nivel == <span class="num">1</span>); <span class="coment">// 1 é o nivel da camada que você quer obter</span> 
             </div>
             <p>Que retorna um array, onde os objetos serão armazenados. você pode remover com:</p>
             <div class="codigo">
-                engine.<span class="func">rm</span>(camada, engine.camadas);
+                eco.<span class="func">rm</span>(camada, eco.camadas);
             </div>
             <p>Isto serve para a maioria dos casos. Porém, para remover objetos em camadas é necessário especificiar a camada onde ele está.</p>
             <div class="codigo">
-                engine.<span class="func">rm</span>(player, camada);
+                eco.<span class="func">rm</span>(player, camada);
             </div>
             <p>Você pode recuperar camadas pelo nome com:</p>
             <div class="codigo">
-                <span class="chave">const</span> camada = engine.<span class="func">obterCamada</span>(<span class="string">"nome"</span>);
+                <span class="chave">const</span> camada = eco.<span class="func">obterCamada</span>(<span class="string">"nome"</span>);
             </div>
         </div>
         <div class="sessao">
@@ -337,7 +325,7 @@
                 tileset.src = <span class="string">"sprites/tileset2.png"</span>; <span class="coment">// caminho do tileset</span><br><br>
                 <span class="chave">const</span> editor = <span class="chave">new</span> <span class="coment">EditorMapas</span>(<br>
                 &nbsp;&nbsp;tileset,<br>
-                &nbsp;&nbsp;<span class="string">"telaJogo"</span><span class="coment"> // ID do canvas atual (tela)</span><br>);<br><br>
+                &nbsp;&nbsp;eco<span class="coment"> // contexto para guardar os dados do mapa</span><br>);<br><br>
                 <span class="chave">const</span> mapa = <span class="coment">Android</span>.<span class="func">ler</span>(<span class="string">"mapa.json"</span>); <span class="coment">// recupere o conteúdo do JSON</span><br>
                 editor.<span class="func">carregarMapa</span>(mapa); <span class="coment">// carregue o mapa</span>
             </div>
@@ -347,14 +335,51 @@
             <h2>Sobre Camêra:</h2>
             <p>Para criar uma câmera que apenas segue o jogador, você pode apenas fazer:</p>
             <div class="codigo">
-                engine.camera = <span class="chave">new</span> <span class="coment">Camera</span>(engine, player);
+                eco.camera = <span class="chave">new</span> <span class="coment">Camera</span>(eco, player);
             </div>
             <p>Apenas isso já é o suficiente para criar uma câmera que segue o objeto player.</p>
             <p>Lembre-se de manter seus botões e interfaces em uma camada estática para não ser afetada pela câmera, exemplo:</p>
             <div class="codigo">
-                engine.<span class="func">novaCamada</span>(<span class="string">"interface"</span>, <span class="num">1</span>, <span class="num">true</span>);
+                eco.<span class="func">novaCamada</span>(<span class="string">"interface"</span>, <span class="num">1</span>, <span class="num">true</span>);
+            </div>
+            <p>Extra: Ajuste a tela utilizando:</p>
+            <div class="codigo">
+                <span class="coment">// isso aumenta o canvas com mais 250 pixels de tamanho</span>
+                eco.canvas.width += <span class="num">250</span>;<br>
+                eco.canvas.height += <span class="num">250</span>;
             </div>
         </div>
+        <div class="sessao">
+            <h2>Sobre colisão:</h2>
+            <p>Para colisão, primeiro precisamos configurar algumas coisas sobre os dois (ou mais) objetos sprite que irão colidir.</p>
+            <div class="codigo">
+                player.vx = <span class="num">1</span>;<br>
+                player.vy = <span class="num">1</span>;<br><br>
+                objeto.vx = <span class="num">1</span>;<br>
+                objeto.vy = <span class="num">1</span>;
+            </div>
+            <p>Isso define as velocidades de movimento verticais e horizontais dos objetos.</p>
+            <div class="codigo">
+                eco.<span class="func">solido</span>(player, objeto, <span class="num">0</span>, <span class="num">0</span>);
+            </div>
+            <p>Isto cria uma colisão seca que apenas impede o objeto e o jogador que se sobreponham.</p>
+            <p>Caso você queira uma colisão mais "elastica", altere o primeiro parâmetro númerico da função, que define a elasticidade dos dois. O segundo parâmetro define o atrito.</p>
+            <p>Para manter a colisão constante, junte isso a um loop:</p>
+            <div class="codigo">
+                eco.<span class="func">sempreExecutar</span>(() <span class="chave">=></span> {<br>
+                &nbsp;&nbsp;eco.<span class="func">solido</span>(player, objeto, <span class="num">1</span>, <span class="num">0</span>);<br>
+                });
+            </div>
+        </div>
+        <!--
+        <div class="sessao">
+            <h2>Sobre animações:</h2>
+            <p>Você pode criar animações manipulando variaveis opcionais do objeto sprite:</p>
+            <div class="codigo">
+                <span class="chave">const</span> vida = <span class="chave">new</span> <span class="coment">Sprite</span>(<span class="string">"sprs/vida.png"</span>);
+                vida.vx =
+            </div>
+        </div> -->
         <footer>
             <p>Eco-Engine &copy; 2025 - Desenvolvido por Shiniga-OP</p>
             <p>JavaScript • Java</p>
