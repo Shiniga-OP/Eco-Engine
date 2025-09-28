@@ -283,15 +283,22 @@ function atualizar() {
             const arquivos = Android.listarArquivos(caminho);
             const divProjetos = document.getElementById("arquivos");
             const listaArquivos = JSON.parse(arquivos.replace("[", "[\"").replace("]", "\"]").replace(/, /g, "\",\""));
-            divProjetos.innerHTML = "<p>Arquivos do projeto:</p><br><button onClick=\"voltarUmaPasta()\">voltar...</button><button onClick=\"ativarDeletar()\">deletar</button><br>";
+            divProjetos.innerHTML = "<p>Arquivos do projeto:</p><br><button onClick=\"voltarUmaPasta()\">voltar...</button><button onClick=\"ativarDeletar()\">Excluir</button><br>";
             listaArquivos.forEach(arquivo => {
               const dir = document.createElement("div");
               const pasta = document.createElement("div");
               pasta.id = "pasta";
-              const texto = document.createElement("div");
-              texto.textContent = arquivo;
+              const texto = document.createElement("input");
+              texto.value = arquivo;
               texto.style.cursor = "pointer";
               texto.style.margin = "10px";
+              texto.addEventListener("click", (e) => {
+                  e.stopPropagation();
+              });
+              texto.addEventListener("change", (e) => {
+                  Android.renomear(arquivo, e.target.value);
+                  atualizar();
+              });
               pasta.onclick = () => {
                   if(Android.ehDir(arquivo)) caminho += arquivo + "/";
                   else {
@@ -306,12 +313,15 @@ function atualizar() {
               dir.appendChild(pasta);
               if(modoDelete) {
                   const deletarBt = document.createElement("button");
-                  deletarBt.textContent = "Deletar";
+                  deletarBt.textContent = "Excluir";
+                  deletarBt.addEventListener("click", (e) => {
+                      e.stopPropagation();
+                  });
                   deletarBt.onclick = () => {
                       Android.deletar(caminho+arquivo);
                       atualizar();
                   };
-                  dir.appendChild(deletarBt);
+                  pasta.appendChild(deletarBt);
               }
               divProjetos.appendChild(dir);
             });

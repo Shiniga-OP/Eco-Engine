@@ -81,7 +81,7 @@
     <div id="novoTela">
       <div>
         <h3>Nome do projeto</h3>
-        <p>Versão do motor: 0.0.3</p>
+        <p>Versão do motor: 0.0.4</p>
         <input type="text" placeholder="nome do projeto" id="nomeProjeto">
       </div>
       <button onclick="confirmarNovo()">Ok</button>
@@ -116,10 +116,13 @@
               const projeto = document.createElement("div");
               const img = document.createElement("img");
               const info = document.createElement("div");
-              const texto = document.createElement("div");
+              const texto = document.createElement("input");
               const versao = document.createElement("p");
               const excluir = document.createElement("button");
               excluir.textContent = "Excluir";
+              excluir.addEventListener("click", (e) => {
+                  e.stopPropagation();
+              });
               excluir.onclick = () => {
                   Android.deletar(arquivo);
                   Android.msg("Projeto: "+arquivo+" excluido");
@@ -128,10 +131,18 @@
               img.src = arquivo+"/icone.png";
               versao.textContent = Android.ler(arquivo+"/versao.txt");
               img.id = "icone";
-              texto.textContent = arquivo;
+              texto.value = arquivo;
               texto.style.cursor = "pointer";
               texto.style.margin = "5px";
-              if(!exclusao) projeto.onclick = () => abrirProjeto(arquivo);
+              texto.addEventListener("click", (e) => {
+                  e.stopPropagation();
+              });
+              texto.addEventListener("change", (e) => {
+                  Android.renomear(arquivo, e.target.value);
+                  atualizar();
+              });
+              
+              projeto.onclick = () => abrirProjeto(arquivo);
               projeto.id = "projeto";
               projeto.appendChild(img);
               info.appendChild(texto);

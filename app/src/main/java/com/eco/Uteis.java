@@ -84,7 +84,7 @@ class ArquivosUtil {
     }
 
     public static String lerCaminho(String caminho) {
-        criarArquivo(caminho);
+        if(!existeArquivo(caminho)) return "não achado.";
 
         StringBuilder sb = new StringBuilder();
         FileReader fr = null;
@@ -190,11 +190,11 @@ class ArquivosUtil {
 		return false;
 	}
 	
-	public static boolean renomearPasta(String caminhoAntigo, String caminhoNovo) {
+	public static boolean renomear(String caminhoAntigo, String caminhoNovo) {
 		File pastaAntiga = new File(caminhoAntigo);
 		File pastaNova = new File(caminhoNovo);
 
-		return pastaAntiga.exists() && pastaAntiga.isDirectory() && pastaAntiga.renameTo(pastaNova);
+		return pastaAntiga.exists() && pastaAntiga.renameTo(pastaNova);
 	}
 	
 	public static void arquivarAssets(String caminhoExterno, InputStream is) {

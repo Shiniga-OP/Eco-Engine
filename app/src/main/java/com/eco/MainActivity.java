@@ -63,6 +63,7 @@ public class MainActivity extends Activity {
 		File ecoDir = new File(caminho);
 		if(!ecoDir.exists()) ecoDir.mkdirs();
 		if(new File(caminho+"inicio.html").exists()) {
+			ArquivosUtil.copiarArquivoAssets(this, caminho+"doc.html", "ECO/doc.html");
 			Toast.makeText(this, "Página inicial carregada", Toast.LENGTH_SHORT).show();
 		} else {
 			Toast.makeText(this, "Página inicial carregando", Toast.LENGTH_SHORT).show();
@@ -342,7 +343,7 @@ public class MainActivity extends Activity {
 		
 		@JavascriptInterface
 		public void renomear(String caminhoDestino, String caminhoNovo) {
-			arq.renomearPasta(caminhoDestino, caminhoNovo);
+			arq.renomear(pacote+caminhoDestino, pacote+caminhoNovo);
 		}
 		
 		@JavascriptInterface

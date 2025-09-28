@@ -19,11 +19,11 @@ veja a documentação mais recente em *doc.html*.
 ## lista de recursos:
 1. [x] interface. (98%)
 2. [x] sistema de navegação em paginas. (100%)
-3. [x] finalizar o editor de mapas padrão. (97%)
-4. [x] complementar a API Java. (79%)
-5. [x] fazer documentação da engine. (40%)
+3. [x] editor de mapas padrão. (97%)
+4. [x] API Java. (79%)
+5. [x] documentação da engine. (65%)
 6. [x] configurações visuais. (55%)
-7. [ ] geração de APK.
+7. [ ] geração de APK. (0%)
 8. [x] console. (98%) // retirado temporariamente.
 9. [x] controles de navegação entre paginas. (100%);
 10. [x] sistema de camêra. (87%)
@@ -32,3 +32,5 @@ veja a documentação mais recente em *doc.html*.
 13. [x] executor de codigo (usando HTML separado via iframe). (100%)
 14. [x] produtor de música 8-bit embutido. (40%)
 15. [x] editor de pixels embutido. (60%)
+16. [ ] editor de componentes visual.
+17. [ ] criação e configuração de objetos visualmente. (0%)
