@@ -1,1 +1,1 @@
-Versão do motor: 0.0.4
+Versão do motor: 0.0.5
