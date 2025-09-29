@@ -1,0 +1,759 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>Eco-Engine - Estúdio Pixel</title>
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            background: #000;
+            color: #0f0;
+            font-family: monospace;
+            touch-action: none;
+            overflow: hidden;
+        }
+        
+        .cabecalho {
+            padding: 8px;
+            background: #111;
+            border-bottom: 1px solid #0f0;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .cabecalho label {
+            font-size: 14px;
+        }
+        
+        .controles input, .controles select, .controles button {
+            background: #000;
+            color: #0f0;
+            border: 1px solid #0f0;
+            padding: 6px;
+            border-radius: 4px;
+        }
+        
+        .btPrimario {
+            background: #0f0;
+            color: #000;
+            border: none;
+            padding: 8px 10px;
+            border-radius: 6px;
+            font-weight: bold;
+        }
+        
+        .area-trabalho {
+            display: flex;
+            height: calc(100vh - 120px);
+        }
+        
+        .painel-esquerdo {
+            width: 220px;
+            background: #111;
+            padding: 10px;
+            border-right: 1px solid #0f0;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            overflow-y: auto;
+        }
+        
+        .canvas-div {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #222;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        #canvasPixel {
+            background: #000;
+            cursor: crosshair;
+            image-rendering: pixelated;
+        }
+        
+        .grupo-ferramentas {
+            border: 1px solid #0f0;
+            border-radius: 4px;
+            padding: 10px;
+        }
+        
+        .grupo-ferramentas h4 {
+            margin: 0 0 10px 0;
+            color: #0f0;
+            font-size: 14px;
+        }
+        
+        .ferramentas-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
+        }
+        
+        .ferramenta {
+            width: 40px;
+            height: 40px;
+            background: #000;
+            color: #0f0;
+            border: 1px solid #0f0;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .ferramenta.ativa {
+            background: #0f0;
+            color: #000;
+        }
+        
+        .paleta-cores {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 4px;
+            margin-top: 5px;
+        }
+        
+        .cor {
+            width: 30px;
+            height: 30px;
+            border: 1px solid #333;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        
+        .cor.ativa {
+            border: 2px solid #fff;
+            box-shadow: 0 0 5px #fff;
+        }
+        
+        #seletorCor {
+            width: 100%;
+            height: 40px;
+            margin-top: 5px;
+            background: #000;
+            border: 1px solid #0f0;
+            border-radius: 4px;
+        }
+        
+        .controles-animacao {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+            margin-top: 10px;
+        }
+        
+        .frame-div {
+            display: flex;
+            gap: 5px;
+            margin-top: 10px;
+            overflow-x: auto;
+            padding: 5px 0;
+        }
+        
+        .frame {
+            width: 50px;
+            height: 50px;
+            border: 2px solid #333;
+            border-radius: 4px;
+            cursor: pointer;
+            background: #000;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #0f0;
+            font-size: 12px;
+        }
+        
+        .frame.ativo {
+            border-color: #0f0;
+        }
+        
+        .barra-status {
+            padding: 8px;
+            font-size: 13px;
+            background: rgba(255,255,255,0.02);
+            border-top: 1px solid rgba(255,255,255,0.03);
+            display: flex;
+            justify-content: space-between;
+        }
+    </style>
+</head>
+<body>
+    <div class="cabecalho">
+        <div class="controles">
+            <button id="btNovo" class="btPrimario">Novo</button>
+            <button id="btSalvar">Salvar</button>
+            <button id="btCarregar">Carregar</button>
+            <button id="btExportar">Exportar PNG</button>
+            <label>Tamanho:
+                <select id="tamanhoCanvas">
+                    <option value="8">8x8</option>
+                    <option value="16">16x16</option>
+                    <option value="32" selected>32x32</option>
+                    <option value="64">64x64</option>
+                </select>
+            </label>
+            <label>Zoom:
+                <input type="range" id="zoom" min="1" max="20" value="10">
+            </label>
+        </div>
+    </div>
+    <div class="area-trabalho">
+        <div class="painel-esquerdo">
+            <div class="grupo-ferramentas">
+                <h4>Ferramentas</h4>
+                <div class="ferramentas-grid">
+                    <button class="ferramenta ativa" data-ferramenta="lapis" title="Lápis">✏️</button>
+                    <button class="ferramenta" data-ferramenta="borracha" title="Borracha">🧽</button>
+                    <button class="ferramenta" data-ferramenta="balde" title="Balde">🪣</button>
+                    <button class="ferramenta" data-ferramenta="pipeta" title="Pipeta">💧</button>
+                </div>
+            </div>
+            <div class="grupo-ferramentas">
+                <h4>Cores</h4>
+                <div class="paleta-cores" id="paleta"></div>
+                <input type="color" id="seletorCor" value="#00ff00">
+                <div style="margin-top: 5px; font-size: 12px;">
+                    Cor atual: <span id="corAtualHex">#00FF00</span>
+                </div>
+            </div>
+            <div class="grupo-ferramentas">
+                <h4>Animação</h4>
+                <div class="controles-animacao">
+                    <button id="btNovoFrame">+ Frame</button>
+                    <button id="btrmFrame">- Frame</button>
+                </div>
+                <div class="controles-animacao">
+                    <button id="btPlay">▶️</button>
+                    <button id="btStop">⏹️</button>
+                    <label>FPS:
+                        <input type="number" id="fps" min="1" max="60" value="12" style="width: 50px;">
+                    </label>
+                </div>
+                <div class="frame-div" id="frameDiv"></div>
+            </div>
+            <div class="grupo-ferramentas">
+                <h4>Camadas</h4>
+                <div class="controles-animacao">
+                    <button id="btNovaCamada">+ Camada</button>
+                    <button id="btrmCamada">- Camada</button>
+                </div>
+                <div id="listaCamadas" style="margin-top: 10px;"></div>
+            </div>
+        </div>
+        <div class="canvas-div">
+            <canvas id="canvasPixel"></canvas>
+        </div>
+    </div>
+    <div class="barra-status">
+        <span id="status">Pronto | Ferramenta: Lápis | Posição: 0,0</span>
+        <span id="infoProjeto">Tamanho: 32x32 | Frames: 1 | Camadas: 1</span>
+    </div>
+<script>
+class EditorPixelArt {
+    constructor() {
+        this.canvas = document.getElementById('canvasPixel');
+        this.ctx = this.canvas.getContext('2d');
+        
+        this.largura = 32;
+        this.altura = 32;
+        this.zoom = 10;
+        this.corPrimaria = '#00ff00';
+        this.corFundo = '#000000';
+        this.ferramentaAtiva = 'lapis';
+        
+        this.frames = [this.criarframeDados()];
+        this.frameAtual = 0;
+        this.animacaoRodar = false;
+        this.intervaloAnimacao = null;
+        this.fps = 12;
+        
+        this.camadas = [{
+            nome: "Camada 1",
+            visivel: true,
+            opacidade: 1,
+            frames: [this.criarframeDados()]
+        }];
+        this.camadaAtual = 0;
+        
+        this.desenhando = false;
+        this.ultimoX = 0;
+        this.ultimoY = 0;
+        
+        const paleta = document.getElementById('paleta');
+        const cores = [
+            '#000000', '#333333', '#666666', '#999999', '#cccccc', '#ffffff',
+            '#ff0000', '#ff6600', '#ffff00', '#00ff00', '#00ffff', '#0000ff',
+            '#6600ff', '#ff00ff', '#8b4513', '#d2691e', '#ffd700', '#7cfc00'
+        ];
+        
+        cores.forEach(cor => {
+            const div = document.createElement('div');
+            div.className = 'cor';
+            div.style.backgroundColor = cor;
+            div.addEventListener('click', () => {
+                this.corPrimaria = cor;
+                document.getElementById('seletorCor').value = cor;
+                document.getElementById('corAtualHex').textContent = cor.toUpperCase();
+                this.attCoresAtivas();
+            });
+            paleta.appendChild(div);
+        });
+        this.attCoresAtivas();
+        this.configurarEventos();
+        this.attCanvas();
+        this.render();
+        this.attFramesUI();
+        this.attCamadasUI();
+        this.attInfoProjeto();
+    }
+    
+    criarframeDados() {
+        const dados = new Array(this.altura);
+        for(let y = 0; y < this.altura; y++) {
+            dados[y] = new Array(this.largura).fill(null); // null = transparente
+        }
+        return dados;
+    }
+    
+    attCoresAtivas() {
+        document.querySelectorAll('.cor').forEach(cor => {
+            cor.classList.toggle('ativa', cor.style.backgroundColor === this.corPrimaria);
+        });
+    }
+    
+    configurarEventos() {
+        this.canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            this.iniciarDesenho(e.touches[0]);
+        });
+        
+        this.canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            this.desenhar(e.touches[0]);
+        });
+        
+        this.canvas.addEventListener('touchend', () => this.desenhando = false);
+        document.getElementById('seletorCor').addEventListener('input', (e) => {
+            this.corPrimaria = e.target.value;
+            document.getElementById('corAtualHex').textContent = this.corPrimaria.toUpperCase();
+            this.attCoresAtivas();
+        });
+        
+        document.getElementById('zoom').addEventListener('input', (e) => {
+            this.zoom = parseInt(e.target.value);
+            this.attCanvas();
+        });
+        
+        document.getElementById('tamanhoCanvas').addEventListener('change', (e) => {
+            this.largura = this.altura = parseInt(e.target.value);
+            this.novoProjeto();
+        });
+        document.querySelectorAll('.ferramenta').forEach(bt => {
+            bt.addEventListener('click', (e) => {
+                document.querySelectorAll('.ferramenta').forEach(f => f.classList.remove('ativa'));
+                e.target.classList.add('ativa');
+                this.ferramentaAtiva = e.target.dataset.ferramenta;
+                this.attStatus(`Ferramenta: ${this.obterNomeFerramenta(this.ferramentaAtiva)}`);
+            });
+        });
+        document.getElementById('btNovoFrame').addEventListener('click', () => this.addFrame());
+        document.getElementById('btrmFrame').addEventListener('click', () => this.rmFrame());
+        document.getElementById('btPlay').addEventListener('click', () => this.rodarAnimacao());
+        document.getElementById('btStop').addEventListener('click', () => this.pararAnimacao());
+        document.getElementById('fps').addEventListener('change', (e) => {
+            this.fps = parseInt(e.target.value);
+        });
+        document.getElementById('btNovaCamada').addEventListener('click', () => this.addCamada());
+        document.getElementById('btrmCamada').addEventListener('click', () => this.rmCamada());
+        document.getElementById('btNovo').addEventListener('click', () => this.novoProjeto());
+        document.getElementById('btSalvar').addEventListener('click', () => this.salvarProjeto());
+        document.getElementById('btCarregar').addEventListener('click', () => this.carregarProjeto());
+        document.getElementById('btExportar').addEventListener('click', () => this.exportarPNG());
+    }
+    
+    obterNomeFerramenta(ferramenta) {
+        const nomes = {
+            'lapis': 'Lápis', 'borracha': 'Borracha', 'balde': 'Balde', 'pipeta': 'Pipeta'
+        };
+        return nomes[ferramenta] || ferramenta;
+    }
+    
+    attCanvas() {
+        const container = this.canvas.parentElement;
+        const tamanhoMax = Math.min(container.clientWidth, container.clientHeight) * 0.8;
+        const tamanhoVisual = Math.min(tamanhoMax, Math.max(this.largura, this.altura) * this.zoom);
+        
+        this.canvas.width = this.largura;
+        this.canvas.height = this.altura;
+        this.canvas.style.width = this.canvas.style.height = `${tamanhoVisual}px`;
+        
+        this.render();
+    }
+    
+    obterPosicaoPixel(e) {
+        const rect = this.canvas.getBoundingClientRect();
+        const scaleX = this.largura / rect.width;
+        const scaleY = this.altura / rect.height;
+        const x = Math.floor((e.clientX - rect.left) * scaleX);
+        const y = Math.floor((e.clientY - rect.top) * scaleY);
+        this.attStatus(`Ferramenta: ${this.obterNomeFerramenta(this.ferramentaAtiva)} | Posição: ${x},${y}`);
+        return { x, y };
+    }
+    
+    iniciarDesenho(e) {
+        const pos = this.obterPosicaoPixel(e);
+        this.desenhando = true;
+        this.ultimoX = pos.x;
+        this.ultimoY = pos.y;
+        this.executarAcaoFerramenta(pos.x, pos.y, true);
+    }
+    
+    desenhar(e) {
+        if(!this.desenhando) return;
+        const pos = this.obterPosicaoPixel(e);
+        
+        if(this.ferramentaAtiva === 'lapis' || this.ferramentaAtiva === 'borracha') {
+            this.desenharLinha(this.ultimoX, this.ultimoY, pos.x, pos.y);
+        } else {
+            this.executarAcaoFerramenta(pos.x, pos.y, false);
+        }
+        
+        this.ultimoX = pos.x;
+        this.ultimoY = pos.y;
+    }
+    
+    executarAcaoFerramenta(x, y, clicado) {
+        switch(this.ferramentaAtiva) {
+            case 'lapis':
+                this.desenharPixel(x, y, this.corPrimaria);
+                break;
+            case 'borracha':
+                this.desenharPixel(x, y, null);
+                break;
+            case 'balde':
+                if(clicado) this.preencherArea(x, y, this.corPrimaria);
+                break;
+            case 'pipeta':
+                if(clicado) this.selecionarCorDoPixel(x, y);
+                break;
+        }
+    }
+    
+    desenharPixel(x, y, cor) {
+        if(x < 0 || x >= this.largura || y < 0 || y >= this.altura) return;
+        
+        this.camadas[this.camadaAtual].frames[this.frameAtual][y][x] = cor;
+        this.render();
+    }
+    
+    desenharLinha(x0, y0, x1, y1) {
+        const cor = this.ferramentaAtiva === 'borracha' ? null : this.corPrimaria;
+        const dx = Math.abs(x1 - x0), dy = Math.abs(y1 - y0);
+        const sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1;
+        let err = dx - dy;
+        
+        let atualX = x0, atualY = y0;
+        
+        while(true) {
+            this.desenharPixel(atualX, atualY, cor);
+            if(atualX === x1 && atualY === y1) break;
+            const e2 = 2 * err;
+            if(e2 > -dy) { err -= dy; atualX += sx; }
+            if(e2 < dx) { err += dx; atualY += sy; }
+        }
+    }
+    
+    preencherArea(x, y, novaCor) {
+        if(x < 0 || x >= this.largura || y < 0 || y >= this.altura) return;
+        
+        const frameDados = this.camadas[this.camadaAtual].frames[this.frameAtual];
+        const corAlvo = frameDados[y][x];
+        
+        if(corAlvo === novaCor) return;
+        
+        const pilha = [[x, y]];
+        const visitados = new Set();
+        
+        while(pilha.length > 0) {
+            const [cx, cy] = pilha.pop();
+            const key = `${cx},${cy}`;
+            
+            if(visitados.has(key) || cx < 0 || cx >= this.largura || cy < 0 || cy >= this.altura) continue;
+            if(frameDados[cy][cx] !== corAlvo) continue;
+            
+            frameDados[cy][cx] = novaCor;
+            visitados.add(key);
+            
+            pilha.push([cx + 1, cy], [cx - 1, cy], [cx, cy + 1], [cx, cy - 1]);
+        }
+        this.render();
+    }
+    
+    selecionarCorDoPixel(x, y) {
+        if(x < 0 || x >= this.largura || y < 0 || y >= this.altura) return;
+        
+        for(let i = this.camadas.length - 1; i >= 0; i--) {
+            if(this.camadas[i].visivel) {
+                const cor = this.camadas[i].frames[this.frameAtual][y][x];
+                if(cor !== null) {
+                    this.corPrimaria = cor;
+                    document.getElementById('seletorCor').value = cor;
+                    document.getElementById('corAtualHex').textContent = cor.toUpperCase();
+                    this.attCoresAtivas();
+                    return;
+                }
+            }
+        }
+    }
+    
+    render() {
+        this.ctx.clearRect(0, 0, this.largura, this.altura);
+        for(let i = 0; i < this.camadas.length; i++) {
+            if(this.camadas[i].visivel) {
+                const frameDados = this.camadas[i].frames[this.frameAtual];
+                for(let y = 0; y < this.altura; y++) {
+                    for(let x = 0; x < this.largura; x++) {
+                        if(frameDados[y][x] !== null) {
+                            this.ctx.fillStyle = frameDados[y][x];
+                            this.ctx.fillRect(x, y, 1, 1);
+                        }
+                    }
+                }
+            }
+        }
+        this.attInfoProjeto();
+    }
+    
+    attStatus(mensagem) {
+        document.getElementById('status').textContent = mensagem;
+    }
+    
+    attInfoProjeto() {
+        document.getElementById('infoProjeto').textContent = 
+            `Tamanho: ${this.largura}x${this.altura} | Frames: ${this.camadas[0].frames.length} | Camadas: ${this.camadas.length}`;
+    }
+    
+    addFrame() {
+        this.camadas.forEach(camada => {
+            camada.frames.push(this.criarframeDados());
+        });
+        this.frameAtual = this.camadas[0].frames.length - 1;
+        this.attFramesUI();
+        this.render();
+    }
+    
+    rmFrame() {
+        if (this.camadas[0].frames.length <= 1) return;
+        this.camadas.forEach(camada => {
+            camada.frames.splice(this.frameAtual, 1);
+        });
+        this.frameAtual = Math.min(this.frameAtual, this.camadas[0].frames.length - 1);
+        this.attFramesUI();
+        this.render();
+    }
+    
+    attFramesUI() {
+        const div = document.getElementById('frameDiv');
+        div.innerHTML = '';
+        this.camadas[0].frames.forEach((frame, idc) => {
+            const frameDiv = document.createElement('div');
+            frameDiv.className = `frame ${idc === this.frameAtual ? 'ativo' : ''}`;
+            frameDiv.textContent = idc + 1;
+            frameDiv.addEventListener('click', () => {
+                this.frameAtual = idc;
+                this.attFramesUI();
+                this.render();
+            });
+            div.appendChild(frameDiv);
+        });
+    }
+    
+    rodarAnimacao() {
+        if(this.camadas[0].frames.length <= 1) {
+            this.attStatus("Adicione mais frames para animar");
+            return;
+        }
+        this.animacaoRodar = true;
+        let frameidc = this.frameAtual;
+        this.intervaloAnimacao = setInterval(() => {
+            this.frameAtual = frameidc;
+            this.attFramesUI();
+            this.render();
+            frameidc = (frameidc + 1) % this.camadas[0].frames.length;
+        }, 1000 / this.fps);
+    }
+    
+    pararAnimacao() {
+        this.animacaoRodar = false;
+        if(this.intervaloAnimacao) clearInterval(this.intervaloAnimacao);
+    }
+
+    addCamada() {
+        const novaCamada = {
+            nome: `Camada ${this.camadas.length + 1}`,
+            visivel: true,
+            opacidade: 1,
+            frames: []
+        };
+        
+        for(let i = 0; i < this.camadas[0].frames.length; i++) {
+            novaCamada.frames.push(this.criarframeDados());
+        }
+        
+        this.camadas.push(novaCamada);
+        this.camadaAtual = this.camadas.length - 1;
+        this.attCamadasUI();
+        this.render();
+    }
+    
+    rmCamada() {
+        if(this.camadas.length <= 1) return;
+        this.camadas.splice(this.camadaAtual, 1);
+        this.camadaAtual = Math.min(this.camadaAtual, this.camadas.length - 1);
+        this.attCamadasUI();
+        this.render();
+    }
+    
+    attCamadasUI() {
+        const div = document.getElementById('listaCamadas');
+        div.innerHTML = '';
+        this.camadas.forEach((camada, idc) => {
+            const c = document.createElement('div');
+            c.style.padding = '5px';
+            c.style.border = `1px solid ${idc === this.camadaAtual ? '#0f0' : '#333'}`;
+            c.style.margin = '2px 0';
+            c.style.cursor = 'pointer';
+            c.style.background = camada.visivel ? '#111' : '#333';
+            
+            c.innerHTML = `
+                <strong>${camada.nome}</strong>
+                <br>
+                <small>
+                    Visível: <input type="checkbox" ${camada.visivel ? 'checked' : ''} 
+                    onchange="editorPixel.mudarCamadaVisivel(${idc}, this.checked)">
+                </small>
+            `;
+            
+            c.addEventListener('click', (e) => {
+                if(e.target.type !== 'checkbox') {
+                    this.camadaAtual = idc;
+                    this.attCamadasUI();
+                }
+            });
+            div.appendChild(c);
+        });
+    }
+    
+    mudarCamadaVisivel(idc, visivel) {
+        this.camadas[idc].visivel = visivel;
+        this.render();
+    }
+    
+    novoProjeto() {
+        this.largura = this.altura = parseInt(document.getElementById('tamanhoCanvas').value);
+        this.zoom = 10;
+        this.camadas = [{
+            nome: "Camada 1",
+            visivel: true,
+            opacidade: 1,
+            frames: [this.criarframeDados()]
+        }];
+        this.frameAtual = 0;
+        this.camadaAtual = 0;
+        this.attCanvas();
+        this.attFramesUI();
+        this.attCamadasUI();
+        this.attStatus("Novo projeto criado");
+    }
+    
+    salvarProjeto() {
+        const projeto = {
+            largura: this.largura,
+            altura: this.altura,
+            camadas: this.camadas,
+            frameAtual: this.frameAtual,
+            dataCriacao: new Date().toISOString()
+        };
+        const dados = JSON.stringify(projeto);
+        
+        if(typeof Android !== 'undefined' && Android.arquivar) {
+            const sucesso = Android.arquivar('sprs/projeto.pixel.json', dados);
+            this.attStatus(sucesso ? 'Projeto salvo!' : 'Erro ao salvar');
+        } else {
+            localStorage.setItem('pixelArtProjeto', dados);
+            this.attStatus('Projeto salvo localmente');
+        }
+    }
+    
+    carregarProjeto() {
+        let dados;
+        if(typeof Android !== 'undefined' && Android.ler) {
+            dados = Android.ler('sprs/projeto.pixel.json');
+        } else {
+            dados = localStorage.getItem('pixelArtProjeto');
+        }
+        
+        if(dados) {
+            const projeto = JSON.parse(dados);
+            this.largura = projeto.largura;
+            this.altura = projeto.altura;
+            this.camadas = projeto.camadas;
+            this.frameAtual = projeto.frameAtual || 0;
+            this.camadaAtual = 0;
+            
+            this.attCanvas();
+            this.attFramesUI();
+            this.attCamadasUI();
+            this.attStatus('Projeto carregado');
+        } else {
+            this.attStatus('Nenhum projeto encontrado');
+        }
+    }
+    
+    exportarPNG() {
+        const canvasEx = document.createElement('canvas');
+        canvasEx.width = this.largura;
+        canvasEx.height = this.altura;
+        const ctxEx = canvasEx.getContext('2d');
+
+        for(let i = 0; i < this.camadas.length; i++) {
+            if(this.camadas[i].visivel) {
+                const frameDados = this.camadas[i].frames[this.frameAtual];
+                for(let y = 0; y < this.altura; y++) {
+                    for(let x = 0; x < this.largura; x++) {
+                        if(frameDados[y][x] !== null) {
+                            ctxEx.fillStyle = frameDados[y][x];
+                            ctxEx.fillRect(x, y, 1, 1);
+                        }
+                    }
+                }
+            }
+        }
+        const dadosUrl = canvasEx.toDataURL('image/png');
+        if(typeof Android !== 'undefined' && Android.arquivarBase64) {
+            const sucesso = Android.arquivarBase64(`sprs/sprite_${Date.now()}.png`, dadosUrl);
+            this.attStatus(sucesso ? 'PNG exportado' : 'Erro ao exportar');
+        } else {
+            const a = document.createElement('a');
+            a.href = dadosUrl;
+            a.download = `sprite_${Date.now()}.png`;
+            a.click();
+            this.attStatus('PNG exportado no navegador');
+        }
+    }
+}
+const editorPixel = new EditorPixelArt();
+</script>
+</body>
+</html>

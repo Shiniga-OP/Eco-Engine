@@ -31,6 +31,6 @@ veja a documentação mais recente em *doc.html*.
 12. [x] gerenciador de arquivos. (85%)
 13. [x] executor de codigo (usando HTML separado via iframe). (100%)
 14. [x] produtor de música 8-bit embutido. (40%)
-15. [x] editor de pixels embutido. (60%)
+15. [x] editor de pixels embutido. (70%)
 16. [ ] editor de componentes visual.
 17. [ ] criação e configuração de objetos visualmente. (0%)
