@@ -195,6 +195,7 @@
             <button id="btSalvar">Salvar</button>
             <button id="btCarregar">Carregar</button>
             <button id="btExportar">Exportar PNG</button>
+            <input type="text" placeholder="nome do PNG" value="imagem.png" id="btNomePng">
             <label>Tamanho:
                 <select id="tamanhoCanvas">
                     <option value="8">8x8</option>
@@ -688,7 +689,7 @@ class EditorPixelArt {
         const dados = JSON.stringify(projeto);
         
         if(typeof Android !== 'undefined' && Android.arquivar) {
-            const sucesso = Android.arquivar('sprs/projeto.pixel.json', dados);
+            const sucesso = Android.arquivar('pixel_projeto.json', dados);
             this.attStatus(sucesso ? 'Projeto salvo!' : 'Erro ao salvar');
         } else {
             localStorage.setItem('pixelArtProjeto', dados);
@@ -742,12 +743,12 @@ class EditorPixelArt {
         }
         const dadosUrl = canvasEx.toDataURL('image/png');
         if(typeof Android !== 'undefined' && Android.arquivarBase64) {
-            const sucesso = Android.arquivarBase64(`sprs/sprite_${Date.now()}.png`, dadosUrl);
+            const sucesso = Android.arquivarBase64("sprs/"document.getElementById("btNomePng").value, dadosUrl);
             this.attStatus(sucesso ? 'PNG exportado' : 'Erro ao exportar');
         } else {
             const a = document.createElement('a');
             a.href = dadosUrl;
-            a.download = `sprite_${Date.now()}.png`;
+            a.download = document.getElementById("btNomePng").value
             a.click();
             this.attStatus('PNG exportado no navegador');
         }

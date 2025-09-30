@@ -37,7 +37,7 @@
           width: 50px;
           height: 50px;
       }
-      #barraFerramentas select, #barraFerramentas input, #barraFerramentas button, button {
+      #barraFerramentas select, #barraFerramentas input, #barraFerramentas button, button, #des, #descricao {
         margin-right: 5px;
         background: #111;
         border: 1px solid #444;
@@ -45,6 +45,7 @@
         padding: 5px;
         cursor: pointer;
       }
+      
       #barraFerramentas input { 
         width: 120px; 
       }
@@ -70,6 +71,15 @@
         padding: 5px;
         width: 200px;
       }
+      
+      #novoTela textarea{
+        background: #111;
+        border: 1px solid #444;
+        color: #0f0;
+        padding: 5px;
+        width: 300px;
+        height: 100px;
+      }
     </style>
   </head>
   <body>
@@ -83,6 +93,7 @@
         <h3>Nome do projeto</h3>
         <p>Versão do motor: 0.0.5</p>
         <input type="text" placeholder="nome do projeto" id="nomeProjeto">
+        <textarea id="descricao" placeholder="Descrição do projeto..."></textarea>
       </div>
       <button onclick="confirmarNovo()">Ok</button>
       <button onclick="cancelarNovo()">Cancelar</button>
@@ -94,7 +105,12 @@
       }
       function confirmarNovo() {
         const nome = document.getElementById("nomeProjeto").value;
-        Android.criarProjeto(nome);
+        Android.criarProjeto(nome == "" ? "novo projeto" : nome);
+        if(document.getElementById("descricao").value != "") {
+            Android.arquivar(nome+"/descricao.txt", document.getElementById("descricao").value);
+        } else {
+            Android.arquivar(nome+"/descricao.txt", "Sem descrição");
+        }
         document.getElementById("novoTela").style.display = "none";
         cancelarNovo();
         abrirProjeto(nome);
@@ -112,7 +128,7 @@
             const listaArquivos = JSON.parse(arquivos.replace("[", "[\"").replace("]", "\"]").replace(/, /g, "\",\""));
             
             listaArquivos.forEach(arquivo => {
-              if(!Android.ehDir(arquivo)) return;
+              if(!Android.ehDir(arquivo) || arquivo.startsWith(".")) return;
               const projeto = document.createElement("div");
               const img = document.createElement("img");
               const info = document.createElement("div");
@@ -147,6 +163,14 @@
               projeto.appendChild(img);
               info.appendChild(texto);
               info.appendChild(versao);
+              const des = document.createElement("p");
+              let textoDescricao = Android.ler(arquivo+"/descricao.txt");
+              if(textoDescricao.length > 50) {
+                  textoDescricao = textoDescricao.substring(0, 50) + "...";
+              }
+              des.textContent = textoDescricao;
+              des.id = "des";
+              info.appendChild(des);
               projeto.appendChild(info);
               divProjetos.appendChild(projeto);
               if(exclusao) projeto.appendChild(excluir);

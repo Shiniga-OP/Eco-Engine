@@ -1,3 +1,5 @@
+<script src="../.config/eruda.min.js"></script><script>eruda.init();</script>
 <canvas id="telaJogo"></canvas>
-<script>eval(`${Android.ler("nucleo.js")}
-const eco = new Motor("telaJogo");${Android.ler("jogo.js")}`);</script>
+<script>eval(Android.ler("nucleo.js")+`
+const eco = new Motor("telaJogo");`);</script>
+<script>eval(Android.ler("scripts/jogo.js"));</script>

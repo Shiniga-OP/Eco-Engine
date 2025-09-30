@@ -5,8 +5,12 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Eco-Engine - central</title>
 	<script src="engine.js"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.3/ace.js"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.3/ext-language_tools.min.js"></script>
+	<script src="../.config/ace.min.js"></script>
+	<script src="../.config/lang.min.js"></script>
+	<script src="../.config/mode-javascript.min.js"></script>
+	<script src="../.config/mode-html.min.js"></script>
+	<script src="../.config/mode-css.min.js"></script>
+	<script src="../.config/theme-monokai.min.js"></script>
 <style>
 html, body {
   margin:0;
@@ -37,6 +41,12 @@ html, body {
   color:#0f0;
   padding:5px;
   cursor:pointer;
+}
+#icone {
+    width: 50px;
+    height: 50px;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
 }
 #barraFerramentas input { width:100px; }
 #conteudo {
@@ -133,22 +143,28 @@ html, body {
 	  </div>
 	  <div id="console" class="pagina"></div>
 	</div>
+<!--
+<script type="module">
+    import "../.config/eruda.min.js";
+    eruda.init();
+</script> -->
 <script>
 let caminho = "";
 let dev = false;
 
-if(typeof Android != "undefined") dev = false;
+if(typeof Android !== "undefined" && Android !== null) dev = false;
 else dev = true;
 
 let modoDelete = false;
-let inicio = `<canvas id=\"telaJogo\"></canvas>\n<script>eval(Android.ler(\"nucleo.js\"));<\/script>\n<script>const eco = new Motor(\"telaJogo\");<\/script>\n<script>eval(Android.ler(\"scripts/jogo.js\"));<\/script>\n`;
+let inicio = `<script src="../.config/eruda.min.js"><\/script><script>eruda.init();<\/script>\n<canvas id="telaJogo"><\/canvas>\n<script>eval(Android.ler("nucleo.js")+\`\nconst eco = new Motor("telaJogo");\`);<\/script>\n<script>eval(Android.ler("scripts\/jogo.js"));<\/script>\n`;
+
 if(!dev) {
     document.getElementById("reiniciar").classList.add("escondido");
 }
 
-if(!dev && Android.ler("jogo.html")=="") {
+if(!dev && (Android.ler("jogo.html")=="" || !Android.arquivoExiste("jogo.html"))) {
     Android.arquivar("jogo.html", inicio);
-} else {
+} else if(!dev) {
     inicio = Android.ler("jogo.html");
 }
 const antigoConsoleLog = console.log;
@@ -300,6 +316,15 @@ function atualizar() {
               texto.value = arquivo;
               texto.style.cursor = "pointer";
               texto.style.margin = "10px";
+              const img = document.createElement("img");
+              img.src = "../.config/icones/txt.png";
+              img.id = "icone";
+              if(arquivo.endsWith(".png") || arquivo.endsWith(".jpg")) {
+                  img.src = caminho+arquivo;
+              } else if(arquivo.endsWith(".wav") || arquivo.endsWith(".mp3") || arquivo.endsWith(".ogg") || arquivo.endsWith(".m4a")) {
+                  img.src = "../.config/icones/audio.png";
+              } else if(Android.ehDir(caminho+arquivo)) img.src = "../.config/icones/pasta.png";
+              pasta.appendChild(img);
               texto.addEventListener("click", (e) => {
                   e.stopPropagation();
               });
