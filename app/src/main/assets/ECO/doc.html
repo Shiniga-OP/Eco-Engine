@@ -140,7 +140,7 @@
             <div class="logo">🕹️</div>
             <h1>Eco-Engine</h1>
             <h2>(Documentação)</h2>
-            <h2>Versão de motor: v0.0.4</h2>
+            <h2>Versão de motor: v0.0.6</h2>
             <p class="linha-marcada">Game Engine Mobile para criação de jogos 2D em JavaScript</p>
         </header>
         <div class="sessao">
@@ -414,6 +414,29 @@
                 &nbsp;&nbsp;<span class="num">1</span>, <span class="coment">// duração</span><br>
                 &nbsp;&nbsp;<span class="string">"sine"</span>, <span class="coment">// tipo</span><br>
                 &nbsp;&nbsp;<span class="num">0.9</span>, <span class="coment">// volume</span><br>
+                );
+            </div>
+        </div>
+        <div class="sessao">
+            <h2>Sobre Textos.</h2>
+            <p>Dá pra escrever um texto na tela com essas configurações:</p>
+            <div class="codigo">
+                <span class="chave">const</span> texto = eco.<span class="func">novoTexto</span>(<br>
+                &nbsp;&nbsp;<span class="string">"texto de exemplo"</span>,<br>
+                &nbsp;&nbsp;<span class="num">20</span>, <span class="coment">// tamanho em pixels (opcional)</span><br>
+                &nbsp;&nbsp;<span class="string">"blue"</span>, <span class="coment">// cor do texto (opcional, azul por padrão)</span><br>
+                &nbsp;&nbsp;camada <span class="coment">// aqui a camada, caso queira (opcional)</span><br>
+                );
+            </div>
+            <p>Você pode usar quebras de linha com:</p>
+            <div class="codigo">
+                eco.<span class="func">novoTexto</span>(<span class="string">"texto<span class="num">\n</span>duas linhas"</span>);
+            </div>
+            <p>Ou com aspas diferentes:</p>
+            <div class="codigo">
+                eco.<span class="func">novoTexto</span>(<br>
+                &nbsp;&nbsp;<span class="string">`texto<br>
+                &nbsp;&nbsp;duas linhas`</span><br>
                 );
             </div>
         </div>

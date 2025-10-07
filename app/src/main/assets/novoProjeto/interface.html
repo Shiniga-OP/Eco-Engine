@@ -149,7 +149,20 @@ if(typeof Android !== "undefined" && Android !== null) dev = false;
 else dev = true;
 
 let modoDelete = false;
-let inicio = `<script src="../.config/eruda.min.js"><\/script><script>eruda.init();<\/script>\n<canvas id="telaJogo"><\/canvas>\n<script>eval(Android.ler("nucleo.js")+\`\nconst eco = new Motor("telaJogo");\`);<\/script>\n<script>eval(Android.ler("scripts\/jogo.js"));<\/script>\n`;
+let scripts = ["scripts/jogo.js"]; // Lista de scripts do projeto
+let excluirScripts = false;
+
+let inicio = `
+<script src="../.config/eruda.min.js"><\/script><script>eruda.init();<\/script>
+<canvas id="telaJogo"></canvas>
+<script>
+    eval(
+        Android.ler("nucleo.js")
+        +'const eco = new Motor("telaJogo");'
+        ${scripts.map(script => `+Android.ler("${script}")`).join('\n        ')}
+    );
+<\/script>
+`;
 
 if(!dev) {
     document.getElementById("reiniciar").classList.add("escondido");
@@ -159,6 +172,15 @@ if(!dev && (Android.ler("jogo.html")=="" || !Android.arquivoExiste("jogo.html"))
     Android.arquivar("jogo.html", inicio);
 } else if(!dev) {
     inicio = Android.ler("jogo.html");
+    // Extrair scripts existentes do HTML
+    const scriptRegex = /Android\.ler\("([^"]+)"\)/g;
+    let match;
+    scripts = [];
+    while((match = scriptRegex.exec(inicio)) !== null) {
+        if(match[1] !== "nucleo.js") {
+            scripts.push(match[1]);
+        }
+    }
 }
 const editor = ace.edit("editorCodigo");
 editor.setTheme("ace/theme/monokai");
@@ -220,21 +242,27 @@ function abrir() {
 
 function executar() {
   console.clear();
-  document.getElementById("console").innerHTML = "";
   if(!dev) {
     Android.limparLogs();
     Android.msg("Rodando...");
   }
   try {
+    inicio = `
+<script src="../.config/eruda.min.js"><\/script><script>eruda.init();<\/script>
+<canvas id="telaJogo"></canvas>
+<script>
+    eval(
+        Android.ler("nucleo.js")
+        +'const eco = new Motor("telaJogo");'
+        ${scripts.map(script => `+Android.ler("${script}")`).join('\n        ')}
+    );
+<\/script>
+`;
     Android.arquivar("jogo.html", inicio);
     trocarPagina("jogo.html");
     document.getElementById("listaPaginas").value = "jogo.html";
   } catch(e) {
-    const div = document.getElementById("console");
-    if(div) {
-      div.innerHTML += e.message + '\n';
-      div.scrollTop = div.scrollHeight;
-    }
+      console.log("ERRO: ", e);
   }
 }
 
@@ -296,7 +324,7 @@ function atualizar() {
               divProjetos.appendChild(dir);
             });
         } catch(e) {
-          document.getElementById("console").innerHTML += "Erro ao carregar projetos: " + e.message;
+          console.log("Erro ao carregar projetos: " + e.message);
         }
       }
      
@@ -331,42 +359,62 @@ function abrirScripts() {
     const add = document.createElement("button");
     add.textContent = "Adicionar script";
     add.onclick = () => {
-        inicio += `<script>eval(Android.ler("scripts/novo.js"));<\/script>\n`;
+        scripts.push("scripts/novo.js");
+        if(!Android.arquivoExiste("scripts/novo.js")) {
+            Android.arquivar("scripts/novo.js", "// Novo script");
+        }
         abrirScripts();
     };
     cs.appendChild(add);
-
-    const regex = /Android\.ler\("([^"]+)"\)/g;
-    let match;
-    let scripts = Android.ler("jogo.html").split("\n");
-    while((match = regex.exec(inicio)) !== null) {
-        scripts.push({ caminho: match[1], index: match.index });
-    }
+    const rm = document.createElement("button");
+    rm.textContent = "Excluir script";
+    rm.onclick = () => {
+        if(excluirScripts) excluirScripts = false;
+        else excluirScripts = true;
+        abrirScripts();
+    };
+    cs.appendChild(rm);
 
     for(const script of scripts) {
-        if(script.caminho == (null || undefined)) continue;
         const linha = document.createElement("div");
 
         const js = document.createElement("input");
         js.type = "text";
-        js.value = script.caminho;
+        js.value = script;
         
-        if(!Android.arquivoExiste(script.caminho)) {
-            Android.arquivar(script.caminho, "");
+        if(!Android.arquivoExiste(script)) {
+            Android.arquivar(script, "");
         }
 
         js.addEventListener("change", (e) => {
-            inicio = inicio.replace(`<script>eval(Android.ler("${script.caminho}"));<\/script>\n`, `<script>eval(Android.ler("${e.target.value}"));<\/script>\n`);
+            const idc = scripts.indexOf(script);
+            if(idc !== -1) {
+                scripts[idc] = e.target.value;
+            }
         });
 
         const remover = document.createElement("button");
         remover.textContent = "Remover";
         remover.onclick = () => {
-            inicio = inicio.replace(`<script>eval(Android.ler("${script.caminho}"));<\/script>\n`, "");
+            const idc = scripts.indexOf(script);
+            if(idc !== -1) {
+                scripts.splice(idc, 1);
+            }
+            abrirScripts();
+        }
+        const exclui = document.createElement("button");
+        exclui.textContent = "Excluir";
+        exclui.onclick = () => {
+            const idc = scripts.indexOf(script);
+            if(idc !== -1) {
+                scripts.splice(idc, 1);
+            }
+            Android.deletar(script);
             abrirScripts();
         }
         linha.appendChild(js);
         linha.appendChild(remover);
+        if(excluirScripts) linha.appendChild(exclui);
         cs.appendChild(linha);
     }
 }

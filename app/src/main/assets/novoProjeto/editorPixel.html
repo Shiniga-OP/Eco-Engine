@@ -743,7 +743,7 @@ class EditorPixelArt {
         }
         const dadosUrl = canvasEx.toDataURL('image/png');
         if(typeof Android !== 'undefined' && Android.arquivarBase64) {
-            const sucesso = Android.arquivarBase64("sprs/"document.getElementById("btNomePng").value, dadosUrl);
+            const sucesso = Android.arquivarBase64("sprs/"+document.getElementById("btNomePng").value, dadosUrl);
             this.attStatus(sucesso ? 'PNG exportado' : 'Erro ao exportar');
         } else {
             const a = document.createElement('a');
