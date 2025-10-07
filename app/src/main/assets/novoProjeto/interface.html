@@ -334,7 +334,7 @@ function voltarUmaPasta() {
     for(let i = 0; i < pastas.length-1; i++) {
         if(pastas.length < 2) caminho = "";
     }
-    document.getElementById("nomeArquivo").value = caminho;
+    if(!Android.ehDir(caminho)) document.getElementById("nomeArquivo").value = caminho;
     atualizar();
 }
 function voltarCasa() {

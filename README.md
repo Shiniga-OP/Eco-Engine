@@ -11,6 +11,9 @@ Além de conter um editor de mapas para posicionamento visual de objetos sprites
 
 A Eco-Engine também possuí um editor de pixels com recursos para desenhar, apagar, preencher, e capturar cores. Além de um suporte básico a animações em frames. Camadas também são suportadas.
 
+## escopo:
+o escopo de ações da engine fica no armazenamento externo, exemplo: "/storage/emulated/0/ECO/".
+
 ## portatíl:
 Os recursos foram adicionados a uma pasta .config para execução sem necessidade de internet. Continue seus projetos em qualquer lugar.
 
@@ -28,7 +31,7 @@ veja a documentação mais recente em *doc.html*.
 2. [x] sistema de navegação em paginas. (100%)
 3. [x] editor de mapas padrão. (97%)
 4. [x] API Java. (79%)
-5. [x] documentação da engine. (65%)
+5. [x] documentação da engine. (68%)
 6. [x] configurações visuais. (68%)
 7. [ ] geração de APK. (0%)
 8. [x] console (adicionado apenas na execução do jogo com Eruda). (100%)
@@ -39,5 +42,5 @@ veja a documentação mais recente em *doc.html*.
 13. [x] executor de codigo (usando HTML separado via iframe). (100%)
 14. [x] produtor de música 8-bit embutido. (40%)
 15. [x] editor de pixels embutido. (76%)
-16. [ ] editor de componentes visual.
+16. [x] editor de componentes visual. (99%)
 17. [ ] criação e configuração de objetos visualmente. (0%)
