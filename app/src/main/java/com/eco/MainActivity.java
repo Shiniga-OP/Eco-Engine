@@ -68,6 +68,7 @@ public class MainActivity extends Activity {
 		} else {
 			Toast.makeText(this, "Página inicial carregando", Toast.LENGTH_SHORT).show();
 			ArquivosUtil.copiarPastaAssets(this, caminho, "ECO");
+			ArquivosUtil.renomear(caminho+"/config", caminho+".config");
 			if(new File(caminho+"inicio.html").exists()) Toast.makeText(this, "Página inicial carregada", Toast.LENGTH_SHORT).show();
 			else Toast.makeText(this, "ERRO: arquivo inicio.html não achado", Toast.LENGTH_LONG).show();
 		}
@@ -388,7 +389,8 @@ public class MainActivity extends Activity {
 		public void pacoteSub() {
 			File anterior = (new File(pacote).getParentFile());
 			if(anterior.getAbsolutePath() == ecoDir.getAbsolutePath()) {
-				Toast.makeText(ctx, "Acesso ao armazenamento externo não é permitido", Toast.LENGTH_LONG).show();
+				pacote = ecoDir.getAbsolutePath() + "/";
+				if(anterior.getAbsolutePath()==arq.obterArmaExterno()) Toast.makeText(ctx, "Acesso ao armazenamento externo não é permitido", Toast.LENGTH_LONG).show();
 				return;
 			}
 			pacote = anterior.getAbsolutePath() + "/";

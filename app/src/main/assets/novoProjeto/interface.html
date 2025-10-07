@@ -109,7 +109,6 @@ html, body {
 		<option value="jogo.html">Jogo</option>
 		<option value="editor">Editor</option>
 		<option value="arquivosDiv">Arquivos</option>
-		<option value="console">Console</option>
 		<option value="editorPixel.html">Estúdio pixel</option>
 		<option value="editorMapas.html">Editor de mapas</option>
 		<option value="editorMusica.html">Produtor de músicas</option>
@@ -141,13 +140,7 @@ html, body {
 	  <div id="arquivosDiv" class="pagina">
 		<div id="arquivos"></div>
 	  </div>
-	  <div id="console" class="pagina"></div>
 	</div>
-<!--
-<script type="module">
-    import "../.config/eruda.min.js";
-    eruda.init();
-</script> -->
 <script>
 let caminho = "";
 let dev = false;
@@ -167,62 +160,6 @@ if(!dev && (Android.ler("jogo.html")=="" || !Android.arquivoExiste("jogo.html"))
 } else if(!dev) {
     inicio = Android.ler("jogo.html");
 }
-const antigoConsoleLog = console.log;
-console.log = function() {
-    antigoConsoleLog.apply(console, arguments);
-    const msg = Array.from(arguments).map(arg => {
-        if(arg instanceof Error) return `Erro: ${arg.message}\nStack: ${arg.stack}`;
-        else if(typeof arg === 'object' && arg !== null) {
-            try {
-                return JSON.stringify(arg, null, 2);
-            } catch(e) {
-                return String(arg);
-            }
-        } else return String(arg);
-    });
-    const div = document.getElementById("console");
-    if(div) {
-        div.innerHTML += msg.join(' ') + '\n';
-        div.scrollTop = div.scrollHeight;
-    }
-};
-const antigoConsoleError = console.error;
-console.error = function() {
-    antigoConsoleError.apply(console, arguments);
-    const msg = Array.from(arguments).map(arg => {
-        if(arg instanceof Error) return `❌ ERRO: ${arg.message}\nStack: ${arg.stack}`;
-        else if(typeof arg === 'object' && arg !== null) {
-            try {
-                return `❌ ${JSON.stringify(arg, null, 2)}`;
-            } catch(e) {
-                return `❌ ${String(arg)}`;
-            }
-        } else return `❌ ${String(arg)}`;
-    });
-    const div = document.getElementById("console");
-    if(div) {
-        div.innerHTML += msg.join(' ') + '\n';
-        div.scrollTop = div.scrollHeight;
-    }
-};
-const antigoConsoleWarn = console.warn;
-console.warn = function() {
-    antigoConsoleWarn.apply(console, arguments);
-    const msg = Array.from(arguments).map(arg => {
-        if(typeof arg === 'object' && arg !== null) {
-            try {
-                return `⚠️ ${JSON.stringify(arg, null, 2)}`;
-            } catch(e) {
-                return `⚠️ ${String(arg)}`;
-            }
-        } else return `⚠️ ${String(arg)}`;
-    });
-    const div = document.getElementById("console");
-    if(div) {
-        div.innerHTML += msg.join(' ') + '\n';
-        div.scrollTop = div.scrollHeight;
-    }
-};
 const editor = ace.edit("editorCodigo");
 editor.setTheme("ace/theme/monokai");
 editor.session.setMode("ace/mode/javascript");

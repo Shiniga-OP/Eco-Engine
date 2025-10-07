@@ -10,6 +10,9 @@ class Motor {
     }
     this.ctx = this.canvas.getContext("2d");
     this.ctx.imageSmoothingEnabled = false;
+    this.ctx.mozImageSmoothingEnabled = false;
+    this.ctx.webkitImageSmoothingEnabled = false;
+    this.ctx.msImageSmoothingEnabled = false;
     this.texto = [];
     this.camadas = [];
     this.camada = this.novaCamada("padrao", 0);
@@ -23,7 +26,7 @@ class Motor {
     if(canvasCompleto) this.ajustarTela();
   }
   
-  obterCoordGlobal(e, estatica = false) {
+  obterCoordGlobal(e, estatica=false) {
     const toque = e.touches[0];
     const rect = this.canvas.getBoundingClientRect();
     let x = toque.clientX - rect.left;
@@ -33,7 +36,6 @@ class Motor {
       x = (x - this.zoom.panX) / this.zoom.escala;
       y = (y - this.zoom.panY) / this.zoom.escala;
     }
-
     if(this.camera && !estatica) {
       x += this.camera.x;
       y += this.camera.y;
@@ -73,14 +75,29 @@ class Motor {
   
   add(sprite, camada=this.camada) {
     if(Array.isArray(sprite)) {
-      for(let i = 0; i < sprite.length; i++) camada.push(sprite[i]);
-    } else camada.push(sprite);
+      for(let i = 0; i < sprite.length; i++) {
+          if(sprite[i].click || sprite[i].pressionado || sprite[i].noFim) {
+              this.addBotao(sprite[i], camada);
+          } else camada.push(sprite[i]);
+      }
+    } else {
+        if(sprite.click || sprite.pressionado || sprite.noFim) {
+              this.addBotao(sprite, camada);
+        } else camada.push(sprite);
+    }
     return sprite;
   }
   
   rm(sprite, camada=this.camada) {
-    const i = camada.sprites.indexOf(sprite);
-    if(i != -1) camada.sprites.splice(i, 1);
+    if(Array.isArray(sprite)) {
+      for(let i = 0; i < sprite.length; i++) {
+          const idc = camada.sprites.indexOf(sprite[i]);
+          if(i != -1) camada.sprites.splice(idc, 1);
+      }
+    } else {
+        const idc = camada.sprites.indexOf(sprite);
+        if(idc != -1) camada.sprites.splice(idc, 1);
+    }
   }
   
   rodarAnimacao(alvo, animacao=[], repetir=1, intervalo=0.5, inicio=0) {
@@ -102,7 +119,7 @@ class Motor {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
     if(this.zoom && !this.zoom.ctx) this.zoom.ctx = this.ctx;
-    if(this.zoom) this.zoom.aplicar();
+    if(this.zoom) this.ctx.scale(this.zoom.escala, this.zoom.escala);
 
     for(const camada of this.camadas) {
       this.ctx.save();
@@ -110,34 +127,28 @@ class Motor {
       if(this.camera && !camada.estatica) this.camera.att();
       
       for(const sprite of camada.sprites) {
+          this.ctx.globalAlpha = sprite.alfa == null ? 1 : sprite.alfa;
         try {
           if(sprite.sx != null  && sprite.imagem.complete) {
-              this.ctx.globalAlpha = sprite.alfa;
               this.ctx.drawImage(
                 sprite.imagem,
                 sprite.sx, sprite.sy, sprite.sEX, sprite.sEY,
                 sprite.x, sprite.y, sprite.escalaX, sprite.escalaY);
-              this.ctx.globalAlpha = 1;
             } else if(sprite.imagem != null && sprite.imagem.complete) {
-              this.ctx.globalAlpha = sprite.alfa;
               this.ctx.drawImage(
                 sprite.imagem,
                 sprite.x, sprite.y,
                 sprite.escalaX, sprite.escalaY);
-              this.ctx.globalAlpha = 1;
             } else if(sprite.cor != null && sprite.texto == null) {
-              this.ctx.globalAlpha = sprite.alfa;
               this.ctx.fillStyle = sprite.cor;
               this.ctx.fillRect(
                 sprite.x, sprite.y,
                 sprite.escalaX, sprite.escalaY);
-              this.ctx.globalAlpha = 1;
             } else if(sprite.texto) {
-              this.ctx.globalAlpha = sprite.alfa;
+                this.ctx.fillStyle = sprite.cor;
               if(sprite.texto.includes("\n")) {
                 const array = sprite.texto.split("\n");
                 for(let i = 0; i < array.length; i++) {
-                  this.ctx.fillStyle = sprite.cor;
                   this.ctx.font = sprite.escala;
                   this.ctx.fillText(
                     array[i],
@@ -145,19 +156,15 @@ class Motor {
                     sprite.escalaX, sprite.escalaY);
                 }
               } else {
-                this.ctx.fillStyle = sprite.cor;
                 this.ctx.font = sprite.escala;
                 this.ctx.fillText(
                   sprite.texto,
                   sprite.x, sprite.y,
                   sprite.escalaX, sprite.escalaY);
               }
-              this.ctx.globalAlpha = 1;
             } else if(sprite instanceof Particula) {
-              this.ctx.globalAlpha = sprite.alfa;
               sprite.desenhar(this.ctx);
               sprite.atualizar(this.canvas.width, this.canvas.height);
-              this.ctx.globalAlpha = 1;
             }
         } catch(err) {
           if(err instanceof DOMException) {
@@ -167,6 +174,7 @@ class Motor {
             throw err;
           } else throw err;
         }
+        this.ctx.globalAlpha = 1;
       }
       this.ctx.restore();
     }
@@ -231,7 +239,8 @@ class Motor {
       y: 100,
       escala: tamanho+"px"+" Ariel",
       escalaX: 228,
-      escalaY: 32
+      escalaY: 32,
+      alfa: 1
     };
     camada.push(texto);
     return texto;
@@ -351,10 +360,8 @@ class Motor {
     }
   }
   
-  esperar(tempo=1000, funcao) {
-    setTimeout(() => {
-      funcao();
-    }, tempo);
+  esperar(funcao, tempo=1000) {
+    setTimeout(funcao, tempo);
   }
   
   sempreExecutar(funcao, intervalo=0) {
@@ -391,8 +398,8 @@ class Sprite {
 }
 
 class Camera {
-  constructor(engine, foco) {
-    this.motor = engine;
+  constructor(m, foco) {
+    this.motor = m;
     this.foco = foco;
     this.x = 0;
     this.y = 0;
@@ -805,7 +812,7 @@ class EditorMapas {
 }
 
 class Zoom {
-    constructor(canvasId, escala=1) {
+    constructor(canvasId, escala=1, pinca=true) {
         this.canvas = document.getElementById(canvasId);
         if(this.canvas) {
             this.ctx;
@@ -818,20 +825,13 @@ class Zoom {
             this.ultimoToqueX = 0;
             this.ultimoToqueY = 0;
             this.distAnterior = 0;
-            this.ativo = true;
+            this.ativo = pinca;
             
             this.canvas.addEventListener('touchstart', (e) => { if(this.ativo) this.aoIniciar(e); });
             this.canvas.addEventListener('touchmove', (e) => { if(this.ativo) this.aoMover(e); });
             this.canvas.addEventListener('touchend', () => { if(this.ativo) this.noFim(); });
             this.canvas.addEventListener('touchcancel', () => { if(this.ativo) this.noFim(); });
         }
-    }
-
-    aplicar() {
-        if(!this.ctx) return;
-        this.ctx.setTransform(1, 0, 0, 1, 0, 0);
-        this.ctx.translate(this.panX, this.panY);
-        this.ctx.scale(this.escala, this.escala);
     }
 
     aoIniciar(e) {

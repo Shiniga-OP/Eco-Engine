@@ -5,8 +5,12 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Eco-Engine - central</title>
 	<script src="engine.js"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.3/ace.js"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.3/ext-language_tools.min.js"></script>
+	<script src="../.config/ace.min.js"></script>
+	<script src="../.config/lang.min.js"></script>
+	<script src="../.config/mode-javascript.min.js"></script>
+	<script src="../.config/mode-html.min.js"></script>
+	<script src="../.config/mode-css.min.js"></script>
+	<script src="../.config/theme-monokai.min.js"></script>
 <style>
 html, body {
   margin:0;
@@ -37,6 +41,12 @@ html, body {
   color:#0f0;
   padding:5px;
   cursor:pointer;
+}
+#icone {
+    width: 50px;
+    height: 50px;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
 }
 #barraFerramentas input { width:100px; }
 #conteudo {
@@ -115,18 +125,16 @@ html, body {
 	  <button onClick="location.reload()" id="reiniciar">Reiniciar</button>
 	</div>
 	<div id="conteudo">
-	  <div id="editorMapas" class="pagina">
+	  <div id="paginaDiv" class="pagina">
 		<iframe id="pagina"></iframe>
-	  </div>
-	  <div id="jogo" class="pagina ativa">
-		<canvas id="telaJogo"></canvas>
 	  </div>
 	  <div id="editor" class="pagina">
 		<div id="editorCodigo"></div>
 	  </div>
 	  <div id="scriptsMenu" class="pagina">
 	      <div>
-	          <h3>Componentes do projeto:</h3><button id="sairScripts">X</button>
+	          <h3>Componentes do projeto:</h3>
+	          <button id="sairScripts">X</button>
 	      </div>
 	      <div id="componentes"></div>
 	  </div>
@@ -135,15 +143,29 @@ html, body {
 	  </div>
 	  <div id="console" class="pagina"></div>
 	</div>
+<!--
+<script type="module">
+    import "../.config/eruda.min.js";
+    eruda.init();
+</script> -->
 <script>
 let caminho = "";
 let dev = false;
+
+if(typeof Android !== "undefined" && Android !== null) dev = false;
+else dev = true;
+
 let modoDelete = false;
-let inicio = `<canvas id=\"telaJogo\"></canvas>\n<script>eval(\`\${Android.ler(\"nucleo.js\")}\nconst eco = new Motor(\"telaJogo\");\${Android.ler(\"jogo.js\")}\`);<\/script>\n`;
-let scripts = "";
+let inicio = `<script src="../.config/eruda.min.js"><\/script><script>eruda.init();<\/script>\n<canvas id="telaJogo"><\/canvas>\n<script>eval(Android.ler("nucleo.js")+\`\nconst eco = new Motor("telaJogo");\`);<\/script>\n<script>eval(Android.ler("scripts\/jogo.js"));<\/script>\n`;
+
 if(!dev) {
     document.getElementById("reiniciar").classList.add("escondido");
-    if(Android.ler("jogo.html")=="") Android.arquivar("jogo.html", inicio+scripts);
+}
+
+if(!dev && (Android.ler("jogo.html")=="" || !Android.arquivoExiste("jogo.html"))) {
+    Android.arquivar("jogo.html", inicio);
+} else if(!dev) {
+    inicio = Android.ler("jogo.html");
 }
 const antigoConsoleLog = console.log;
 console.log = function() {
@@ -218,7 +240,7 @@ function trocarPagina(id) {
   for(let i = 0; i < paginas.length; i++) paginas[i].classList.remove("ativa");
 
   if(id.includes("/") || id.endsWith(".html")) {
-    document.getElementById("editorMapas").classList.add("ativa");
+    document.getElementById("paginaDiv").classList.add("ativa");
     document.getElementById("pagina").src = id;
   } else document.getElementById(id).classList.add("ativa");
 }
@@ -254,6 +276,7 @@ function abrir() {
   if(arq.endsWith(".html")) editor.session.setMode("ace/mode/html");
   else if(arq.endsWith(".css")) editor.session.setMode("ace/mode/css");
   else if(arq.endsWith(".js")) editor.session.setMode("ace/mode/javascript");
+  else editor.session.setMode("ace/mode/txt");
   editor.setValue(Android.ler(arq), -1);
   Android.msg("Arquivo aberto");
 }
@@ -266,7 +289,7 @@ function executar() {
     Android.msg("Rodando...");
   }
   try {
-    Android.arquivar("jogo.html", inicio+scripts);
+    Android.arquivar("jogo.html", inicio);
     trocarPagina("jogo.html");
     document.getElementById("listaPaginas").value = "jogo.html";
   } catch(e) {
@@ -293,6 +316,15 @@ function atualizar() {
               texto.value = arquivo;
               texto.style.cursor = "pointer";
               texto.style.margin = "10px";
+              const img = document.createElement("img");
+              img.src = "../.config/icones/txt.png";
+              img.id = "icone";
+              if(arquivo.endsWith(".png") || arquivo.endsWith(".jpg")) {
+                  img.src = caminho+arquivo;
+              } else if(arquivo.endsWith(".wav") || arquivo.endsWith(".mp3") || arquivo.endsWith(".ogg") || arquivo.endsWith(".m4a")) {
+                  img.src = "../.config/icones/audio.png";
+              } else if(Android.ehDir(caminho+arquivo)) img.src = "../.config/icones/pasta.png";
+              pasta.appendChild(img);
               texto.addEventListener("click", (e) => {
                   e.stopPropagation();
               });
@@ -330,6 +362,7 @@ function atualizar() {
           document.getElementById("console").innerHTML += "Erro ao carregar projetos: " + e.message;
         }
       }
+     
 function voltarUmaPasta() {
     const pastas = caminho.split("/");
     caminho = "";
@@ -353,17 +386,55 @@ function abrirScripts() {
     document.getElementById("sairScripts").onclick = () => {
         document.getElementById("listaPaginas").value = "editor";
         trocarPagina("editor");
-    }
+    };
+    
     const cs = document.getElementById("componentes");
     cs.innerHTML = "";
-    const comps = Android.ler("jogo.html").split("\n");
-    for(let i = 0; i < comps.length; i++) {
-        const item = document.createElement("div");
-        item.textContent = comps[i]+"\n";
-        cs.appendChild(item);
+    
+    const add = document.createElement("button");
+    add.textContent = "Adicionar script";
+    add.onclick = () => {
+        inicio += `<script>eval(Android.ler("scripts/novo.js"));<\/script>\n`;
+        abrirScripts();
+    };
+    cs.appendChild(add);
+
+    const regex = /Android\.ler\("([^"]+)"\)/g;
+    let match;
+    let scripts = Android.ler("jogo.html").split("\n");
+    while((match = regex.exec(inicio)) !== null) {
+        scripts.push({ caminho: match[1], index: match.index });
+    }
+
+    for(const script of scripts) {
+        if(script.caminho == (null || undefined)) continue;
+        const linha = document.createElement("div");
+
+        const js = document.createElement("input");
+        js.type = "text";
+        js.value = script.caminho;
+        
+        if(!Android.arquivoExiste(script.caminho)) {
+            Android.arquivar(script.caminho, "");
+        }
+
+        js.addEventListener("change", (e) => {
+            inicio = inicio.replace(`<script>eval(Android.ler("${script.caminho}"));<\/script>\n`, `<script>eval(Android.ler("${e.target.value}"));<\/script>\n`);
+        });
+
+        const remover = document.createElement("button");
+        remover.textContent = "Remover";
+        remover.onclick = () => {
+            inicio = inicio.replace(`<script>eval(Android.ler("${script.caminho}"));<\/script>\n`, "");
+            abrirScripts();
+        }
+        linha.appendChild(js);
+        linha.appendChild(remover);
+        cs.appendChild(linha);
     }
 }
-document.getElementById("nomeArquivo").value = "jogo.js";
+
+document.getElementById("nomeArquivo").value = "scripts/jogo.js";
 editor.setValue("const b = {\n  x: 0, y: 0,\n  escalaX: 60, escalaY: 60,\n  cor: \"blue\", click: () => console.log(\"teste\")\n};\neco.addBotao(b);", -1);
 atualizar();
 abrir();
