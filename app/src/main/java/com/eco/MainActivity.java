@@ -55,7 +55,7 @@ public class MainActivity extends Activity {
 		System.setOut(console);
 		System.setErr(console);
     }
-	
+
 	public void iniciar() {
 		configurarWebView();
 		String caminho = ArquivosUtil.obterArmaExterno()+"/ECO/";
@@ -93,7 +93,7 @@ public class MainActivity extends Activity {
 		tela.getSettings().setSupportZoom(true);
 		tela.getSettings().setCacheMode(WebSettings.LOAD_NO_CACHE);
 		tela.clearCache(true);
-		
+
 		if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
 			tela.setWebContentsDebuggingEnabled(true);
 		}
@@ -188,10 +188,10 @@ public class MainActivity extends Activity {
 			consoleLogs += String.valueOf(o) + "\n";
 		}
 	}
-	
+
 	public static class Audio {
 		public static Map<String, MediaPlayer> mps = new HashMap<>();
-		
+
 		public boolean exportarWAV(String caminho, short[] dados, int taxa) {
 			try {
 				File arquivo = new File(caminho);
@@ -227,7 +227,7 @@ public class MainActivity extends Activity {
 			dos.writeBytes("data");
 			dos.writeInt(dadosTam * 2);
 		}
-		
+
 		public static MediaPlayer tocarMusica(String nome, String caminho, boolean loop) {
 			try {
 				MediaPlayer mp = new MediaPlayer();
@@ -242,7 +242,7 @@ public class MainActivity extends Activity {
 				return null;
 			}
 		}
-		
+
 		public static MediaPlayer tocarMusica(Context ctx, String nome, String caminho, boolean loop) {
 			AssetFileDescriptor afd = null;
 			try {
@@ -302,7 +302,7 @@ public class MainActivity extends Activity {
 			return (float) Math.sqrt(dx*dx + dy*dy);
 		}
 	}
-	
+
 	public class APIJava {
 		public String pacote;
 		public Context ctx;
@@ -336,23 +336,23 @@ public class MainActivity extends Activity {
 		public boolean arquivar(String caminho, String texto) {
 			return arq.escreverArquivo(pacote+caminho, texto);
 		}
-		
+
 		@JavascriptInterface
 		public boolean arquivoExiste(String caminho) {
 			return arq.existeArquivo(pacote+caminho);
 		}
-		
+
 		@JavascriptInterface
 		public void renomear(String caminhoDestino, String caminhoNovo) {
 			arq.renomear(pacote+caminhoDestino, pacote+caminhoNovo);
 		}
-		
+
 		@JavascriptInterface
 		public void copiar(String caminhoDestino, String caminhoNovo) {
 			if(ehDir(caminhoDestino) && ehDir(caminhoNovo)) arq.copiarDir(caminhoDestino, caminhoNovo);
 			else arq.copiarArquivo(caminhoDestino, caminhoNovo);
 		}
-		
+
 		@JavascriptInterface
 		public boolean ehDir(String caminho) {
 			return (new File(pacote+caminho).isDirectory());
@@ -379,12 +379,12 @@ public class MainActivity extends Activity {
 			arq.listarArquivos(pacote + caminho, lista);
 			return lista.toString();
 		}
-		
+
 		@JavascriptInterface
 		public void pacoteAdd(String novo) {
 			pacote += novo + "/";
 		}
-		
+
 		@JavascriptInterface
 		public void pacoteSub() {
 			File anterior = (new File(pacote).getParentFile());
@@ -395,37 +395,49 @@ public class MainActivity extends Activity {
 			}
 			pacote = anterior.getAbsolutePath() + "/";
 		}
-		
+
 		@JavascriptInterface
 		public void criarProjeto(String nome) {
 			novoProjeto(nome);
 		}
-		
+
 		@JavascriptInterface
 		public void tocarAudio(String nome, String caminho, boolean loop) {
 			audio.tocarMusica(nome, pacote+caminho, loop);
 		}
 		
 		@JavascriptInterface
+		public String caminhoAntes(String caminho) {
+			File atual = new File(pacote + caminho);
+			File anterior = atual.getParentFile();
+			if(anterior == null) anterior = ecoDir;
+			if(anterior.getAbsolutePath().equals(arq.obterArmaExterno())) {
+				Toast.makeText(ctx, "Acesso ao armazenamento externo não é permitido", Toast.LENGTH_LONG).show();
+				return ecoDir.getAbsolutePath() + "/";
+			}
+			return anterior.getAbsolutePath() + "/";
+		}
+
+		@JavascriptInterface
 		public void pararAudio(String nome) {
 			audio.pararMusica(nome);
 		}
-		
+
 		@JavascriptInterface
-		public void pararTodosAudios(String nome) {
+		public void pararTodosAudios() {
 			audio.pararMusicas();
 		}
-		
+
 		@JavascriptInterface
 		public boolean exportarWAV(String caminho, short[] dados, int taxa) {
 			return audio.exportarWAV(caminho, dados, taxa);
 		}
-		
+
 		@JavascriptInterface
 		public boolean arquivarBase64(String caminho, String base64) {
 			try {
 				if(base64.contains(",")) base64 = base64.substring(base64.indexOf(",") + 1);
-				
+
 				byte[] bytes = Base64.decode(base64, Base64.DEFAULT);
 				File f = new File(pacote + caminho);
 				FileOutputStream fos = new FileOutputStream(f);

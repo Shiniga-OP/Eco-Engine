@@ -61,6 +61,7 @@ html, body {
   left:0;
   width:100%;
   height:100%;
+  overflow-y: auto;
 }
 
 .pagina.ativa { display:block; }
@@ -85,20 +86,6 @@ html, body {
   width:100%;
   height:100%;
   display:block;
-}
-#console {
-    position:absolute;
-    bottom:0;
-    left:0;
-    width:100%;
-    height:100%;
-    overflow:auto;
-    background:#000;
-    border-top:1px solid #444;
-    color:#0f0;
-    font-family:monospace;
-    font-size:12px;
-    white-space:pre-wrap;
 }
 </style>
   </head>
@@ -286,6 +273,12 @@ function atualizar() {
               img.id = "icone";
               if(arquivo.endsWith(".png") || arquivo.endsWith(".jpg")) {
                   img.src = caminho+arquivo;
+              } else if(arquivo.endsWith(".html")) {
+                  img.src = "../.config/icones/HTML.png";
+              } else if(arquivo.endsWith(".js")) {
+                  img.src = "../.config/icones/JS.png";
+              } else if(arquivo.endsWith(".html")) {
+                  img.src = "../.config/icones/JSON.png";
               } else if(arquivo.endsWith(".wav") || arquivo.endsWith(".mp3") || arquivo.endsWith(".ogg") || arquivo.endsWith(".m4a")) {
                   img.src = "../.config/icones/audio.png";
               } else if(Android.ehDir(caminho+arquivo)) img.src = "../.config/icones/pasta.png";
